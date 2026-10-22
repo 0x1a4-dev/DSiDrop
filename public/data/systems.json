@@ -1,0 +1,93 @@
+[
+  {
+    "id": "nds",
+    "label": "Nintendo DS",
+    "short": "NDS",
+    "data": "/data/nds.json",
+    "ext": "zip",
+    "arch": "zip",
+    "out": "nds",
+    "checksum": "md5",
+    "total": 7332,
+    "withCover": 6967,
+    "generatedAt": "2026-10-11T00:34:58.421Z"
+  },
+  {
+    "id": "gba",
+    "label": "Game Boy Advance",
+    "short": "GBA",
+    "data": "/data/gba.json",
+    "ext": "gba",
+    "arch": null,
+    "out": "gba",
+    "checksum": "crc32",
+    "total": 659,
+    "withCover": 645,
+    "generatedAt": "2026-10-11T00:34:58.847Z"
+  },
+  {
+    "id": "gb",
+    "label": "Game Boy",
+    "short": "GB",
+    "data": "/data/gb.json",
+    "ext": "gb",
+    "arch": null,
+    "out": "gb",
+    "checksum": "md5",
+    "total": 2128,
+    "withCover": 1627,
+    "generatedAt": "2026-10-11T00:34:59.374Z"
+  },
+  {
+    "id": "gbc",
+    "label": "Game Boy Color",
+    "short": "GBC",
+    "data": "/data/gbc.json",
+    "ext": "gbc",
+    "arch": null,
+    "out": "gbc",
+    "checksum": "md5",
+    "total": 494,
+    "withCover": 373,
+    "generatedAt": "2026-10-11T00:34:59.814Z"
+  },
+  {
+    "id": "nes",
+    "label": "Nintendo Entertainment System",
+    "short": "NES",
+    "data": "/data/nes.json",
+    "ext": "nes",
+    "arch": null,
+    "out": "nes",
+    "checksum": "crc32",
+    "total": 3537,
+    "withCover": 1990,
+    "generatedAt": "2026-10-11T00:35:00.309Z"
+  },
+  {
+    "id": "snes",
+    "label": "Super Nintendo Entertainment System",
+    "short": "SNES",
+    "data": "/data/snes.json",
+    "ext": "7z",
+    "arch": "7z",
+    "out": "sfc",
+    "checksum": "md5",
+    "total": 1861,
+    "withCover": 1393,
+    "generatedAt": "2026-10-11T00:35:05.111Z"
+  },
+  {
+    "id": "n64",
+    "label": "Nintendo 64",
+    "short": "N64",
+    "data": "/data/n64.json",
+    "ext": "z64",
+    "arch": null,
+    "out": "z64",
+    "checksum": "md5",
+    "total": 296,
+    "withCover": 262,
+    "generatedAt": "2026-10-11T00:35:07.069Z"
+  }
+]
