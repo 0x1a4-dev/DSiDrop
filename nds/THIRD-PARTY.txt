@@ -1,0 +1,29 @@
+DSiDrop (previously Roms Finder DSi) links to these devkitPro components:
+
+libnds 2.0.2
+https://github.com/devkitPro/libnds
+Authors: Michael Noland, Jason Rogers, Dave Murphy, fincs.
+License: zlib. See libnds-license.txt (unmodified SDK notice).
+
+dswifi 2.1.0 and sgIP
+https://github.com/devkitPro/dswifi
+Original sgIP: Stephen Stair. Current maintainers: fincs, devkitPro.
+License notice distributed with the SDK: MIT. See dswifi-license.txt.
+
+Calico 1.2.0
+https://github.com/devkitPro/calico
+Copyright fincs, devkitPro. License: ZPL-2.1. See calico-COPYING.txt.
+The Calico SDK also supplies the ARM7 image and default devkitPro banner icon.
+
+libdvm compatibility filesystem (libfat-nds 2.1.0)
+https://github.com/devkitPro/libdvm
+Copyright fincs, devkitPro. License: ZPL-2.1. See libdvm-COPYING.txt.
+The FAT implementation is based on FatFs by ChaN:
+https://github.com/devkitPro/fatfs-mod (dkp-mods branch). See fatfs-license.txt.
+
+devkitARM newlib runtime
+https://github.com/devkitPro/newlib
+See newlib-COPYING.txt.
+
+The application source was written for Roms Finder; upstream library sources
+have not been modified. The Makefile follows the devkitPro example layout.
