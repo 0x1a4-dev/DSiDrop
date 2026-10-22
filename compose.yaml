@@ -1,0 +1,19 @@
+name: dsidrop
+
+services:
+  dsidrop:
+    image: dsidrop:1.11.0
+    build:
+      context: .
+    init: true
+    restart: unless-stopped
+    ports:
+      - "${DSIDROP_PORT:-3000}:3000"
+    environment:
+      TZ: "${TZ:-UTC}"
+    volumes:
+      - dsidrop-data:/data
+    stop_grace_period: 30s
+
+volumes:
+  dsidrop-data:
