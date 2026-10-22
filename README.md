@@ -4,6 +4,10 @@
 
 A self-hosted game catalog and download manager with a companion app for Nintendo DSi.
 
+
+<img width="1280" height="720" alt="preview" src="https://github.com/user-attachments/assets/d89bc647-f93b-4576-bf79-eaed2797007c" />
+
+
 ## Web app
 
 - Browse Nintendo DS, GBA, Game Boy, Game Boy Color, NES, SNES and Nintendo 64 catalogs.
