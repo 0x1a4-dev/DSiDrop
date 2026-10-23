@@ -19,3 +19,9 @@ next-env.d.ts
 *.key
 .DS_Store
 Thumbs.db
+/nds/build/
+/nds/dist/
+/nds/DSiDrop.elf
+/nds/DSiDrop.nds
+__pycache__/
+*.py[cod]

@@ -252,11 +252,15 @@ static int waitKey(void) {
     return KEY_B;
 }
 
-bool appYield(void) {
+static bool pollApp(bool wait) {
+    static uint64_t lastPoll;
+    if (!wait && tickGetCount() - lastPoll < ticksFromUsec(16667)) return !quitting;
     if (!pmMainLoop()) { quitting = true; strcpy(lastError, "Exiting"); return false; }
     if (startupVisible && !loadingCover && ++startupTick % 10 == 0) drawStartup();
     uiPresent();
-    swiWaitForVBlank(); scanKeys();
+    if (wait) swiWaitForVBlank();
+    scanKeys();
+    lastPoll = tickGetCount();
     clientTick(false);
     if (loadingCover) {
         int key = catalogInput(0);
@@ -273,6 +277,9 @@ bool appYield(void) {
     if (cancel) { strcpy(lastError, "Paused; partial file kept on SD"); return false; }
     return true;
 }
+
+bool appPoll(void) { return pollApp(false); }
+bool appYield(void) { return pollApp(true); }
 
 void progress(const char *title, const char *message, uint32_t done, uint32_t size) {
     if (clientActive()) clientProgress(done, size, message);
@@ -798,7 +805,7 @@ static bool transfer(const Game *game, const Job *job) {
             }
             crc = crcUpdate(crc, fileBuffer, n); received += n;
             clientProgress(received, job->size, "Downloading to SD");
-            if (!appYield()) { ok = false; break; }
+            if (!appPoll()) { ok = false; break; }
             time_t now = time(NULL);
             if (now != lastDraw) {
                 char text[128];

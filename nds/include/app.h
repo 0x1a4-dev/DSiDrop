@@ -52,6 +52,7 @@ typedef struct {
 extern Settings settings;
 extern char lastError[192];
 
+bool appPoll(void);
 bool appYield(void);
 void progress(const char *title, const char *message, uint32_t done, uint32_t total);
 bool httpOpen(Http *http, const char *method, const char *path, uint32_t offset);

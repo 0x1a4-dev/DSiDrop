@@ -4,10 +4,6 @@
 
 A self-hosted game catalog and download manager with a companion app for Nintendo DSi.
 
-
-<img width="1280" height="720" alt="preview" src="https://github.com/user-attachments/assets/d89bc647-f93b-4576-bf79-eaed2797007c" />
-
-
 ## Web app
 
 - Browse Nintendo DS, GBA, Game Boy, Game Boy Color, NES, SNES and Nintendo 64 catalogs.
@@ -15,18 +11,19 @@ A self-hosted game catalog and download manager with a companion app for Nintend
 - Search and filter by region, language, release type and cover availability.
 - Sort by title or size, or discover a random game.
 - Download individual files or use a saved server download queue with progress tracking.
-- Upload your own `.nds` files
+- Upload your own `.nds` files to **Others**, then download or delete them from the library.
 - Manage multiple DSi devices, rename them and monitor their connection and transfer status.
-- Send NDS, GBA and own `.nds` files to a DSi, individually or as a queue.
+- Send NDS, GBA and Others downloads to a DSi, individually or as a queue.
 
 ## DSi app
 
 - Browse NDS, GBA and Others with covers, search and region filters.
-- Download over Wi-Fi directly to folders on the SD card.
+- Use touchscreen controls, physical buttons and an on-screen keyboard.
+- Download over Wi-Fi directly to organized folders on the internal SD card.
 - Pause and resume downloads, verify transfers with CRC32 and recognize completed files.
 - Save a download queue of up to 32 games across app restarts.
 - Receive downloads sent from the web app and report progress back to the browser.
-- Configure WPA2/AES Wi-Fi or use existing system profiles.
+- Configure WPA2/AES Wi-Fi, use existing system profiles and view connection diagnostics.
 
 ## Quick start
 

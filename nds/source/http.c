@@ -14,6 +14,10 @@ static bool transient(void) {
     return errno == EWOULDBLOCK || errno == EAGAIN || errno == EINPROGRESS || errno == EALREADY;
 }
 
+static uint64_t timeoutTicks(unsigned frames) {
+    return (uint64_t)frames * TICK_FREQ / 60;
+}
+
 void httpClose(Http *http) {
     if (http->socket >= 0) {
 
@@ -23,14 +27,16 @@ void httpClose(Http *http) {
 }
 
 static int receive(Http *http, void *buffer, size_t length) {
-    unsigned idle = 0;
-    while (appYield()) {
+    uint64_t started = tickGetCount();
+    uint64_t timeout = timeoutTicks(http->timeoutFrames);
+    for (;;) {
+        if (!appPoll()) return -1;
         int n = recv(http->socket, buffer, length, 0);
         if (n >= 0) return n;
         if (!transient()) { snprintf(lastError, 192, "Network error (%d)", errno); return -1; }
-        if (++idle >= http->timeoutFrames) { strcpy(lastError, "PC response timed out"); return -1; }
+        if (tickGetCount() - started >= timeout) { strcpy(lastError, "PC response timed out"); return -1; }
+        threadSleep(1000);
     }
-    return -1;
 }
 
 bool httpOpen(Http *http, const char *method, const char *path, uint32_t offset) {
@@ -56,15 +62,16 @@ bool httpOpenTimeout(Http *http, const char *method, const char *path, uint32_t 
     if (result < 0 && !transient()) {
         strcpy(lastError, "Could not connect to the PC"); goto failed;
     }
-    unsigned frames = 0;
+    uint64_t started = tickGetCount();
+    uint64_t timeout = timeoutTicks(connectTimeout);
     for (;;) {
         struct sockaddr_in peer;
         socklen_t length = sizeof(peer);
         if (getpeername(http->socket, (struct sockaddr *)&peer, &length) == 0) break;
-        if (!appYield()) goto failed;
-        if (++frames >= connectTimeout) {
+        if (tickGetCount() - started >= timeout) {
             strcpy(lastError, "PC unreachable. Check IP and firewall."); goto failed;
         }
+        if (!appYield()) goto failed;
     }
     char request[1024], range[64] = "";
     if (offset) snprintf(range, sizeof(range), "Range: bytes=%lu-\r\n", (unsigned long)offset);
@@ -74,12 +81,15 @@ bool httpOpenTimeout(Http *http, const char *method, const char *path, uint32_t 
         method, path, settings.host, settings.port, range);
     if (requestSize < 0 || requestSize >= (int)sizeof(request)) goto failed;
     int sent = 0;
-    frames = 0;
+    started = tickGetCount();
     while (sent < requestSize) {
         int n = send(http->socket, request + sent, requestSize - sent, 0);
-        if (n > 0) { sent += n; frames = 0; }
+        if (n > 0) { sent += n; started = tickGetCount(); }
         else if (n < 0 && !transient()) goto failed;
-        else if (!appYield() || ++frames > connectTimeout) goto failed;
+        else {
+            if (tickGetCount() - started >= timeout) { strcpy(lastError, "PC request timed out"); goto failed; }
+            if (!appYield()) goto failed;
+        }
     }
 
     char *headerEnd = NULL;

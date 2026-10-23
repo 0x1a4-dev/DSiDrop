@@ -25,5 +25,10 @@ devkitARM newlib runtime
 https://github.com/devkitPro/newlib
 See newlib-COPYING.txt.
 
-The application source was written for Roms Finder; upstream library sources
-have not been modified. The Makefile follows the devkitPro example layout.
+The application source was written for Roms Finder. The build prepares a
+project-local dswifi 2.1.0 copy from commit
+ac8fbe9431d32cc4247df300d70c1688057da5e8. Its sgIP TCP receive FIFO is enlarged
+to 32 KiB and its advertised receive window uses available FIFO space instead
+of the original 1,400-byte cap. Upstream license notices are retained and the
+installed SDK libraries are not modified. See tools/prepare_dswifi.py.
+The Makefile follows the devkitPro example layout.

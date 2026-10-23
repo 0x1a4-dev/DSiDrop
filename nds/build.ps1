@@ -7,6 +7,9 @@ $shellPath = Join-Path $DevkitPro 'msys2\usr\bin\bash.exe'
 if (-not (Test-Path -LiteralPath $shellPath)) {
     throw "devkitPro was not found at $DevkitPro. Install the current nds-dev package with libnds 2.x/Calico."
 }
+if (-not $env:PYTHON) {
+    $env:PYTHON = (Get-Command python -ErrorAction Stop).Source.Replace('\', '/')
+}
 $env:ROMS_FINDER_NDS_DIR = $ndsRoot
 & $shellPath -lc 'cd "$(cygpath -u "$ROMS_FINDER_NDS_DIR")" && make -j2'
 if ($LASTEXITCODE -ne 0) { throw 'NDS build failed.' }
