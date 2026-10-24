@@ -74,6 +74,7 @@ static char startupDetail[96];
 #define ACTION_NDS (1 << 22)
 #define ACTION_GBA (1 << 23)
 #define ACTION_OTHERS (1 << 24)
+#define ACTION_RANDOM (1 << 25)
 #define ACTION_SYSTEMS (ACTION_NDS | ACTION_GBA | ACTION_OTHERS)
 static const char *regions[] = { "", "Europe", "Germany", "USA", "Japan", "World" };
 static const char *regionLabels[] = { "All regions", "Europe", "Germany", "USA", "Japan", "World" };
@@ -96,7 +97,7 @@ static RomSystem visibleSystem(unsigned slot) {
 
 static int systemTouchAction(int x) {
     static const int actions[] = { ACTION_NDS, ACTION_GBA, ACTION_OTHERS };
-    return actions[visibleSystem(x < 128 ? 0 : 1)];
+    return actions[visibleSystem(x < 102 ? 0 : 1)];
 }
 
 static void clearKeyboardBackground(Keyboard *keyboard) {
@@ -616,6 +617,38 @@ static bool fetchPage(int requestedPage) {
     return true;
 }
 
+// Picks a random NDS game regardless of the active system or current filters.
+static bool fetchRandomGame(void) {
+    coverPausePrefetch();
+    // Static, not stack: a second PAGE_SIZE buffer would blow the stack-usage budget.
+    static Game probeScratch[PAGE_SIZE];
+    char path[96];
+    lastError[0] = 0;
+    if (browserVisible) {
+        position(&bottom, 17, 3); iprintf("\x1b[37mPicking a random game...     ");
+        uiPresent();
+    } else progress("Loading library", "Picking a random game from your PC...", 0, 0);
+    snprintf(path, sizeof(path), "/api/dsi/catalog?system=nds&q=&page=0&region=");
+    if (!httpText("GET", path, response, sizeof(response))) return false;
+    int probeCount, probeTotal, probePage, probePages;
+    if (!parseCatalogForSystem(response, probeScratch, &probeCount, &probeTotal, &probePage, &probePages, SYSTEM_NDS)) {
+        strcpy(lastError, "Invalid catalog response. Update the PC server."); return false;
+    }
+    if (probeTotal <= 0) { strcpy(lastError, "No NDS games available for a random pick."); return false; }
+
+    snprintf(path, sizeof(path), "/api/dsi/catalog?system=nds&q=&page=%d&region=", rand() % probePages);
+    if (!httpText("GET", path, response, sizeof(response))) return false;
+    int newCount, newTotal, newPage, newPages;
+    if (!parseCatalogForSystem(response, probeScratch, &newCount, &newTotal, &newPage, &newPages, SYSTEM_NDS) || !newCount) {
+        strcpy(lastError, "Invalid catalog response. Update the PC server."); return false;
+    }
+    memcpy(games, probeScratch, sizeof(games));
+    activeSystem = SYSTEM_NDS; query[0] = 0; regionIndex = 0;
+    count = newCount; total = newTotal; page = newPage; pages = newPages; selected = rand() % count;
+    coverPage(games, count, selected);
+    return true;
+}
+
 static void drawGameDetail(const Game *game, const char *notice) {
     bool known;
     const u16 *cover = coverFind(game, &known);
@@ -661,10 +694,13 @@ static void drawBrowser(void) {
     clear(&bottom);
     for (unsigned slot = 0; slot < 2; slot++) {
         RomSystem tab = visibleSystem(slot);
-        uiButton(slot ? 130 : 4, 0, 122, 24, activeSystem == tab ? 4 : 2);
-        position(&bottom, 2, slot ? 22 : 6);
+        uiButton(slot ? 104 : 4, 0, 96, 24, activeSystem == tab ? 4 : 2);
+        position(&bottom, 2, slot ? 16 : 4);
         iprintf("%s%s", activeSystem == tab ? "\x1b[35m" : "\x1b[39m", systemLabel(tab));
     }
+    uiButton(204, 0, 48, 24, 2);
+    // Single row matches the tabs' vertical centering; two stacked rows left no bottom margin.
+    position(&bottom, 2, 27); iprintf("\x1b[36mY \x1b[37mRND");
     if (count) drawGameDetail(&games[selected], browserNotice);
     else {
         position(&bottom, 6, 3); iprintf("\x1b[39m");
@@ -1026,6 +1062,7 @@ int main(void) {
     keyboardHide();
     uiInit(&top, &bottom, keyboard);
     keysSetRepeat(25, 6);
+    srand((unsigned)time(NULL));
 #if defined(ROMSFINDER_INTRO_TEST) || !(defined(ROMSFINDER_UI_TEST) || defined(ROMSFINDER_STARTUP_TEST) || defined(ROMSFINDER_SEARCH_TEST) || defined(ROMSFINDER_PROTOCOL_TEST) || defined(ROMSFINDER_QUEUE_TEST) || defined(ROMSFINDER_DISPLAY_TEST) || defined(ROMSFINDER_CLIENT_TEST) || defined(ROMSFINDER_COVER_TEST))
     if (!playIntro()) return 0;
 #else
@@ -1209,7 +1246,7 @@ int main(void) {
             touchPosition touch;
             if (pending & KEY_TOUCH) touch = lastTouch; else touchRead(&touch);
             if (!uiTouchFeedback(touch.px, touch.py)) continue;
-            if (touch.py < 24) key |= systemTouchAction(touch.px);
+            if (touch.py < 24) key |= touch.px >= 204 ? ACTION_RANDOM : systemTouchAction(touch.px);
             if (touch.py >= 124 && touch.py < 144) key |= ACTION_REGION;
             if (touch.py >= 144 && touch.py < 168) key |= touch.px < 128 ? KEY_X : KEY_START;
             if (touch.py >= 168) key |= touch.px < 128 ? KEY_A : ACTION_ADD_QUEUE;
@@ -1222,7 +1259,7 @@ int main(void) {
             if (coverPrefetchTick(selected)) redraw = true;
             continue;
         }
-        if (key & (KEY_LEFT | KEY_RIGHT | KEY_SELECT | KEY_X | KEY_A | KEY_START | KEY_B | ACTION_REGION | KEY_L | KEY_R | KEY_Y | ACTION_SYSTEMS)) coverPausePrefetch();
+        if (key & (KEY_LEFT | KEY_RIGHT | KEY_SELECT | KEY_X | KEY_A | KEY_START | KEY_B | ACTION_REGION | KEY_L | KEY_R | KEY_Y | ACTION_SYSTEMS | ACTION_RANDOM)) coverPausePrefetch();
         if ((key & KEY_START) && (keysHeld() & KEY_L)) break;
         redraw = true;
         browserNotice[0] = 0;
@@ -1243,7 +1280,9 @@ int main(void) {
                 drawBrowser();
                 if (!fetchPage(0)) message("Region", lastError);
             }
-        } else if (key & (KEY_L | KEY_R | KEY_Y | ACTION_SYSTEMS)) {
+        } else if (key & (KEY_Y | ACTION_RANDOM)) {
+            if (!fetchRandomGame()) message("Random game", lastError);
+        } else if (key & (KEY_L | KEY_R | ACTION_SYSTEMS)) {
             RomSystem before = activeSystem;
             RomSystem next = requestedSystem(key);
             if (next != before) {

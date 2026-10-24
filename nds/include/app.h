@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #define APP_NAME "DSiDrop"
-#define APP_VERSION "1.11.0"
+#define APP_VERSION "1.12.0"
 
 #define PAGE_SIZE 10
 #define MAX_GAME_SIZE (512U * 1024U * 1024U)
