@@ -3,6 +3,9 @@
 **Your library. On your DSi.**
 
 A self-hosted game catalog and download manager with a companion app for Nintendo DSi.
+## Join our Discord
+
+[![Discord](https://img.shields.io/badge/Discord-Join%20our%20server-5865F2?logo=discord&logoColor=white)](https://discord.gg/AEZBum2yr)
 
 ## Web app
 
@@ -57,5 +60,6 @@ Launch downloaded games through TWiLight Menu++. GBA playback depends on your ha
 - To change the port or timezone, copy [.env.example](.env.example) to `.env` and edit `DSIDROP_PORT` or `TZ`.
 - Keep `.env`, Wi-Fi settings, downloaded games, device records and generated build files out of published copies.
 - DSi client source and build command: [nds/README.md](nds/README.md).
+ 
 
 Catalog data: [Internet Archive](https://archive.org). Cover art: [libretro-thumbnails](https://github.com/libretro-thumbnails). DSi library notices: [THIRD-PARTY.txt](nds/THIRD-PARTY.txt).
