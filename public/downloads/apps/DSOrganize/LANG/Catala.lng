@@ -1,0 +1,212 @@
+﻿; Traduït al Català per Eluryh i Rinmash
+; DSOrganize v2.2 Final per a Nintendo DS i Nintendo DS Lite
+
+[Errors]
+NoVCard=No s'han trobat arxius vCard!
+NoFAT=Estàs utilitzant una targeta que no és compatible amb la llibreria FAT de Chishm! Si us plau, executa el programa amb GBAMP o amb targetes compatibles.
+CreateDir=El directori 'DSOrganize' no s'ha trobat! Ha estat creat automàticament amb els ajustaments per defecte.
+NoFiles=No hi ha cap arxiu en aquest directori!
+RenderError=ERROR al processar la informació!
+Preview=La funció 'previsualitzar' no està disponible perquè la imatge és massa petita!
+NoToDo=No s'han trobat tasques!
+NoScribble=No s'han trobat dibuixos!
+NoId3=L'arxiu no conté dades ID3 v1.1!
+
+[Dates]
+Sunday=diumenge
+Monday=dilluns
+Tuesday=dimarts
+Wednesday=dimecres
+Thursday=dijous
+Friday=divendres
+Saturday=dissabte
+	
+January=gener
+February=febrer
+March=març
+April=abril
+May=maig
+June=juny
+July=juliol
+August=agost
+September=setembre
+October=octubre
+November=novembre
+December=desembre
+
+AM=AM
+PM=PM
+
+[Address]
+FirstName=Nom	
+LastName=Cognoms
+Nickname=Àlies
+HomePhone=Telèfon fix
+CellPhone=Telèfon mòbil
+Address=Adreça
+City=Població
+State=Provín.
+Zip=Codi Postal
+EMail=Correu electrònic
+Comment=Comentaris
+
+[Navigation]
+Home=Pantalla Principal
+Welcome=Benvingut/da
+Previous=Anterior
+Next=Següent
+EditReminder=Anotar avís
+ViewDay=Mostrar dia
+DayView=Agenda
+Save=Guardar
+Back=Tornar
+EditSelected=Editar
+Calendar=Calendari
+Create=Crear
+PreviousField=Camp -
+NextField=Camp +
+Configuration=Configuració
+AddressBook=Llibreta de direccions
+Language=Idioma
+StartScreen=Pantalla d'Inici
+TimeFormat=Format de l'hora
+NameFormat=Format del nom
+First=Primer
+Last=Últim
+Unknown=Desconegut
+Browser=Explorador
+Open=Obrir
+Launch=Executar
+PrevDay=Dia -
+NextDay=Dia +
+Up=Enrere
+NewFile=Nou arxiu
+Delete=Esborrar
+Rename=Renombrar
+Copy=Copiar
+Paste=Enganxar
+More=Més
+Confirm=Confirmar
+Filename=Nom de l'arxiu
+Calculator=Calculadora
+Yes=Sí
+No=No
+ShowHidden=Mostrar els arxius ocults
+Memory=Memòria
+Edit=Editar
+PageUp=Re pàg.
+PageDown=Av. pàg.
+Working=Processant...
+ChoosePal=Escull una paleta de colors
+Reset=Reiniciar
+ToDo=Llista de tasques
+Title=Títol
+ScribblePad=Bloc de dibuix
+SaveFormat=Format de guardat
+Pause=Pausa
+Play=Reproduïr
+SoundMode=Tipus de reproducció
+OneShot=Només aquest arxiu
+Sequential=Seqüencial
+NextFile=Arxiu +
+PrevFile=Arxiu -
+RandFile=Aleatori
+Hold=Bloquejar
+DataBase=Llistat d'aplicacions
+View=Veure l'arxiu
+Hide=Ocultar
+Done=Finalitzat!
+Cancel=Cancel.lar
+Date=Data
+Version=Versió
+Size=Tamany
+HTMLMode=Visualitzar el codi HTML
+SecondClick=Acció per al segon clic
+DateFormat=Format de la data
+TextOnly=Només text
+Extended=Extès
+NameSort=Per Nom
+DateSort=Per Data
+Swap=Intercanvia
+Record=Grava
+RecordMode=Tipus de gravació
+Playback=Mostra
+Length=Duració
+Stop=Atura
+IRC=IRC
+Send=Envia
+Disconnect=Desconnecta
+Reconnect=Reconnecta
+LaunchAlt=Executa alternatiu
+MKDir=Nou directori
+Cut=Retalla
+DefaultHomebrew=Directori d'Aplicacions predeterminat
+Proxy=HTTP Proxy
+Drag=Arrastra les icones amb l'stylus per configurar la Pantalla Principal com desitgis.
+AutoConnect=Autoconnectar al servidor IRC
+IRCNickname=Sobrenom IRC
+IRCServer=Servidor IRC
+
+[Regional]
+Numbers=1234567890-=
+Symbols=!@#$%^&*()_+
+Lowercase=azertyuiopqsdfghjklmwxcvbn,./;'[]
+Uppercase=AZERTYUIOPQSDFGHJKLMWXCVBN<>?:"{}
+Special1=àáâãäåèéêëìíîïñòóôõöùúûüý   ðþ~æç
+Special2=ÀÁÂÃÄÅÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ   ÐÞßÆÇ
+
+[Browser]
+FileSize=Tamany de l'arxiu
+FileType=Tipus d'arxiu
+NDSFile=Aplicació Nintendo DS
+TXTFile=Document de text
+VCFFile=Arxiu vCard
+DPLFile=Arxiu d'agenda
+REMFile=Arxiu de calendari
+PicFile=Imatge
+Directory=Directori
+Unknown=Format desconegut
+BINFile=Arxiu binari
+ToDoFile=Arxiu de tasques
+SoundFile=Arxiu de so
+HBFile=Arxiu personal de la BD
+PKGFile=Arxiu personal de paquets
+
+[Id3]
+Title=Títol
+Artist=Artista
+Album=Àlbum
+Genre=Gènere
+Comment=Comentaris
+Year=Any
+Track=Pista núm.
+
+[Streaming]
+Buffer=Buffer
+Status=Estat
+NotConnected=No connectat.
+Associating=Associant...
+Connecting=Connectant...
+ErrorConnecting=ERROR al connectar!
+Streaming=Reproduïnt en temps real!
+Buffering=Omplint el buffer...
+
+[Database]
+ChangedDirectory=Directori canviat
+AlreadyExists=Ja existeix!
+CreatedDirectory=Directori creat
+StartedDownload=Descàrrega iniciada desde
+ConnectingHost=Connectant al servidor...
+Deleted=Esborrat
+MOTD=MOTD
+Description=Descripció
+Retrieving=Recuperant...
+ErrorRetrieving=ERROR al recuperar!
+GettingPackage=Descarregant la informació del paquet...
+FailedPackage=ERROR al descarregar la informació del paquet!
+Connecting=Connectant...
+GetMOTD=Descarregant MOTD...
+GetList=Descarregant llista...
+Download=Descarregar
+NoDBEntries=No hi ha res a la base de dades!
+Refresh=Actualitzar

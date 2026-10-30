@@ -1,0 +1,1 @@
+Este ajuste permite escoger el cargador de homebrew que podrá ser usado como alternativa cuando ejecutes archivos NDS desde el explorador.  Ten en cuenta que solo SuperCard y GBAMP tienen un cargador interno.

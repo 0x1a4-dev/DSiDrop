@@ -1,0 +1,1 @@
+This setting allows you to choose the saving format that the Scribble Pad uses.  Unless you cannot read png files, I recommend using png as it takes up far less space on your card.

@@ -4,6 +4,8 @@ import path from "node:path";
 import { unstable_rethrow } from "next/navigation";
 import type { DeviceClientState, DeviceQueueInput, DeviceSnapshot, DeviceSystem, DsiDevice } from "../device-types";
 import { ascii, lookup } from "./dsi";
+import { supportsMultimedia } from "../media";
+import { supportsFolderTransfer } from "../upload-folder";
 import { ROMS_DIR } from "./rom-file";
 
 export const DEVICE_QUEUE_LIMIT = 32;
@@ -17,7 +19,7 @@ const STATES = new Set<DeviceClientState>(["idle", "busy", "downloading", "done"
 const TERMINAL = new Set(["done", "error", "canceled"]);
 type StoredDevice = Omit<DsiDevice, "online">;
 type Manifest = { version: 1; devices: StoredDevice[] };
-type Lookup = (id: string, system: DeviceSystem) => Promise<{ rom: { t: string; r: string; s: number } }>;
+type Lookup = (id: string, system: DeviceSystem) => Promise<{ rom: { t: string; r: string; s: number; media?: string; folder?: unknown } }>;
 type Poll = { mac: string; ip: string; version: string; task: string; state: DeviceClientState; received: number; size: number; message: string };
 
 export class DeviceError extends Error {
@@ -265,6 +267,10 @@ export class DeviceRegistry {
           throw new DeviceError(error instanceof Error ? error.message : "The selected game is unavailable.", 404);
         }
       }));
+      if (prepared.some(({ rom }) => rom.media) && !supportsMultimedia(device.version))
+        throw new DeviceError("Update this DSi to DSiDrop 1.17.0 or newer before sending multimedia files.", 409);
+      if (prepared.some(({ rom }) => rom.folder) && !supportsFolderTransfer(device.version))
+        throw new DeviceError("Update this DSi to DSiDrop 1.19.0 or newer before sending complete folders.", 409);
       const stamp = new Date(this.now()).toISOString();
       for (const { input, rom } of prepared) device.tasks.push({
         id: randomUUID().replaceAll("-", ""), system: input.system, romId: input.id, title: rom.t, region: rom.r,

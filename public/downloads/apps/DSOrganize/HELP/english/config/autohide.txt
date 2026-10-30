@@ -1,0 +1,1 @@
+If this setting is enabled, DSOrganize will auto-hide the keyboard when you select a favorite or start download a site.

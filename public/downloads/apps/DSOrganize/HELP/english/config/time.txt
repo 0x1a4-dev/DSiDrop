@@ -1,0 +1,1 @@
+This setting allows you to choose whether the times shown in DSOrganize are in normal AM/PM format or in 24 hour (military) format.

@@ -1,0 +1,242 @@
+; Slovak language file by David Bennar
+; Version 2.55
+
+[Errors]
+NoVCard=vCard subori sa nenasli...
+NoFAT=Vasa karta nieje kompatibilna s FAT ovladacom. Prosim pouzite iny format.
+CreateDir=Adresar 'DSOrganize' nebol najdeny! Bol znovu vytvoreny aj s nastaveniami.
+NoFiles=Ziadne subori v adresary...
+RenderError=Nastala chyba pri citani... 
+Preview=Nahlad nieje mozne zobrazit, obrazok je maly...
+NoToDo=Ziadne ulohy...
+NoScribble=Ziadne nakresi...
+NoId3=Popis ID3 v1.1 nebol najdeni...
+
+[Dates]
+Sunday=Nedela
+Monday=Pondelok
+Tuesday=Utorok
+Wednesday=Streda
+Thursday=Stvrtok
+Friday=Piatok
+Saturday=Sobota
+	
+January=Januar
+February=Februar
+March=Marec
+April=April
+May=Maj
+June=Jun
+July=Jul
+August=August
+September=September
+October=Oktober
+November=November
+December=December
+
+AM=AM
+PM=PM
+
+[Address]
+FirstName=Meno
+LastName=Priezvisko
+Nickname=Prezyvka
+HomePhone=Tel.C.
+CellPhone=Mob.C.
+Address=Adresa
+City=Mesto
+State=Stat
+Zip=Smerove C.
+EMail=E-Mail
+Comment=Poznamka
+
+[Navigation]
+Home=Home menu
+Welcome=Vitaj
+Previous=Predosli
+Next=Dalsi
+EditReminder=Upravit den
+ViewDay=Pozriet den
+DayView=Naplanovat den
+Save=Ulozit
+Back=Spat
+EditSelected=Upravit
+Calendar=Kalendar
+Create=Vytvorit
+PreviousField=Predosle pole
+NextField=Dalsie pole
+Configuration=Konfiguracia
+AddressBook=Adresar
+Language=Jazyk
+StartScreen=Uvodna obrazovka
+TimeFormat=Casovy format
+NameFormat=Meno format
+First=Prvy
+Last=Posledny
+Unknown=Neznamy
+Browser=Prehliadac
+Open=Otvorit
+Launch=Spustit
+PrevDay=Predosli den
+NextDay=Dalsi den
+Up=Predosli adresar
+NewFile=Novy subor
+Delete=Vymazat
+Rename=Premenovat
+Copy=Kopirovat
+Paste=Vlozit
+More=Viac
+Confirm=POTVRDIT
+Filename=MenoSuboru
+Calculator=Kalkulacka
+Yes=Ano
+No=Nie
+ShowHidden=Ukazat skryte subori
+Memory=Pamat
+Edit=Upravit
+PageUp=Strana hore
+PageDown=Strana dole
+Working=Pracujem
+ChoosePal=Vybrat paletu
+Reset=Reset
+ToDo=Ulohy
+Title=Titulok
+ScribblePad=Nakreslit
+SaveFormat=Format nakresu
+Pause=Pauza
+Play=Hraj
+SoundMode=Hraci mod
+OneShot=Singel
+Sequential=Sequencia
+NextFile=Dalsi
+PrevFile=Predosli
+RandFile=Nahodny
+Hold=Podrzat
+DataBase=Homebrew Database
+View=Pozriet subor
+Hide=Prepnut skryte subori
+Done=Hotovo
+Cancel=Prerusit
+Date=Datum
+Version=Verzia
+Size=Velkost
+HTMLMode=HTML zobrazenie
+SecondClick=Akcia na druhy klik
+DateFormat=Format Datumu
+TextOnly=Iba text
+Extended=Rozsireny
+NameSort=Zotriedit podla mena
+DateSort=Zotriedit podla datumu
+Swap=Prehodit
+Record=Nahrat
+RecordMode=Nahravaci rezim
+Playback=Prehravanie
+Length=Dlzka
+Stop=Stop
+IRC=IRC
+Send=Poslat
+Disconnect=Odpojenie
+Reconnect=Obnovenie spojenie
+LaunchAlt=Alternativne spustenie
+MKDir=Novy adresar
+Cut=Presunut
+DefaultHomebrew=Default Homebrew Directory
+Proxy=HTTP Proxy
+Drag=Usporiadajte poradie ikoniek.
+AutoConnect=Autoconnect to IRC Server
+IRCNickname=IRC Prezyvka
+IRCServer=IRC Server
+IRCAltNick=IRC Alternativna Prezyvka
+None=Ziadny
+SwapAB=Otoc A/B tlacidla
+SwapBoot=Default Boot Method
+AutoBullet=Auto Bullets in Todo
+Volume=Hlasitost
+NewDir=Novy Adresar
+IconSet=Icon Set
+SettingDescription=Setting Description
+LoadPicture=Nahravam obrazok...
+Continue=Pokracovanie
+
+[Regional]
+Numbers=1234567890-=
+Symbols=!@#$%^&*()_+
+Lowercase=qwertyuiopasdfghjklzxcvbnm,./;'[]
+Uppercase=QWERTYUIOPASDFGHJKLZXCVBNM<>?:"{}
+Special1=‡·‚„‰ÂËÈÍÎÏÌÓÔÒÚÛÙıˆ˘˙˚¸˝   ˛~ÊÁ
+Special2=¿¡¬√ƒ≈»… ÀÃÕŒœ—“”‘’÷Ÿ⁄€‹›   –ﬁﬂ∆«
+
+[Browser]
+FileSize=Velkost suboru
+FileType=Typ suboru
+NDSFile=Nintendo DS
+TXTFile=Textovy subor
+VCFFile=vCard subor
+DPLFile=Day Planner subor
+REMFile=Reminder subor
+PicFile=Obrazok
+Directory=Adresar
+Unknown=Neznamy format
+BINFile=Raw Mode 5 Data
+TodoFile=Todo subor
+SoundFile=Audio subor
+PlayListFile=Playlist
+HBFile=Custom Database File
+PKGFile=Custom Package File
+PluginFile=Plugin
+ExeFile=DSOrganize Exe
+ShortcutFile=DSOrganize Skratka
+
+[Id3]
+Title=Nazov
+Artist=Umelec
+Album=Album
+Genre=Styl
+Comment=Poznamka
+Year=Rok
+Track=Skladba c.
+
+[Streaming]
+Buffer=Buffer
+Status=Status
+NotConnected=Not connected.
+Associating=Associating...
+Connecting=Connecting to stream...
+ErrorConnecting=There was an error connecting!
+Streaming=Streaming!
+Buffering=Buffering stream...
+
+[Database]
+ChangedDirectory=Changed to directory
+AlreadyExists=already exists
+CreatedDirectory=Created directory
+StartedDownload=Started download from
+ConnectingHost=Connecting to host...
+Deleted=Deleted
+MOTD=MOTD
+Description=Description
+Retrieving=Retrieving...
+ErrorRetrieving=Unable to retrieve.
+GettingPackage=Getting package information.
+FailedPackage=Failed downloading package contents.
+Connecting=Connecting...
+GetMOTD=Getting MOTD...
+GetList=Getting list...
+Download=Download
+NoDBEntries=No entries in database!
+Refresh=Refresh List
+Input=Waiting for input
+
+[IRC]
+Disconnected=Odpojeny zo servera.
+Connecting=Pripajam sa na 
+HelpAvailable=Napis /help pre dostupne prikazy!
+Connected=Pripojeny na hotspot!
+FailedConnect=Pripojenie bolo neuspesne.
+CancelledConnect=Pripojenie prerusene.
+CannotConnect=Nemozem sa pripojit na server!
+ServerClosed=Server zavrel pripojenie.
+On=On
+Limit=Limit
+Key=Kluc
+ConversationWith=Konverzacia s

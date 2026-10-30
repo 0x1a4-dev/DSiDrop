@@ -1,0 +1,1 @@
+Ta opcja ma wplyw na to, jak DSOrganize wyswietla wszystkie daty, wlaczajac w to baze homebrew.

@@ -1,0 +1,1 @@
+When enabled, this setting allows DSOrganize IRC to automatically connect to your preferred IRC server after obtaining a connetion to your AP.

@@ -1,0 +1,1 @@
+This setting allows you to enter the gateway of your network, which is usually your router's IP.

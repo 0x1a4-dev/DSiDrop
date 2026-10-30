@@ -1,6 +1,6 @@
 {
   "name": "dsidrop-server",
-  "version": "1.11.0",
+  "version": "1.19.0",
   "private": true,
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
@@ -13,15 +13,15 @@
     "index": "node scripts/build-index.mjs",
     "index:refresh": "node scripts/build-index.mjs --refresh",
     "test:dsi-api": "node scripts/test-dsi.mjs",
-    "docker:build": "docker build -t dsidrop:1.11.0 .",
+    "docker:build": "docker build -t dsidrop:1.19.0 .",
     "docker:up": "docker compose up -d --build",
     "docker:down": "docker compose down",
-    "docker:export": "docker image save --output DSiDrop-1.11.0-docker.tar dsidrop:1.11.0"
+    "docker:export": "docker image save --output DSiDrop-1.19.0-docker.tar dsidrop:1.19.0"
   },
   "dependencies": {
     "7zip-bin": "^5.2.0",
     "busboy": "^1.6.0",
-    "next": "16.4.0",
+    "next": "16.4.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "sharp": "0.35.5"
@@ -33,7 +33,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.4.0",
+    "eslint-config-next": "16.4.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

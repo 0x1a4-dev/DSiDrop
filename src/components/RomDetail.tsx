@@ -6,7 +6,9 @@ import AddToQueueButton from "./AddToQueueButton";
 import CoverImage from "./CoverImage";
 import Icon from "./Icon";
 import SendToDeviceButton from "./SendToDeviceButton";
+import { AddToCollectionButton } from "./CollectionsPanel";
 import { categoryLabel, checksumLabel, downloadUrl, formatBytes, formatLanguages, romCategory, romFileName } from "@/lib/roms";
+import { mediaInfo } from "@/lib/media";
 import type { DatasetMeta, Rom } from "@/lib/types";
 
 function CopyRow({ label, value }: { label: string; value: string }) {
@@ -95,6 +97,7 @@ export default function RomDetail({
   }, [onClose]);
 
   const category = romCategory(rom);
+  const media = mediaInfo(rom.media ?? "");
   const languages = formatLanguages(rom.l);
   const fileName = romFileName(meta, rom);
   const downloadExt = rom.e ?? meta.ext;
@@ -109,7 +112,7 @@ export default function RomDetail({
         onClick={(event) => event.stopPropagation()}
         className="animate-pop relative max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl overflow-y-auto rounded-[24px] border border-white/10 bg-ink-900 shadow-[0_30px_120px_rgba(0,0,0,0.6)] sm:max-h-[calc(100dvh-3rem)]"
       >
-        <button ref={closeButton} type="button" onClick={onClose} aria-label="Close game details" className="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-black/50 text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white">
+        <button ref={closeButton} type="button" onClick={onClose} aria-label="Close details" className="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-black/50 text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white">
           <Icon name="close" className="h-4 w-4" />
         </button>
 
@@ -117,8 +120,8 @@ export default function RomDetail({
           <div className="min-w-0">
             <CoverImage meta={meta} rom={rom} className="mx-auto aspect-square w-48 rounded-2xl border border-white/[0.08] bg-ink-850 sm:mt-1 sm:w-full" sizes="240px" />
             <div className="mt-4 hidden rounded-xl border border-white/5 bg-white/[0.02] p-3.5 sm:block">
-              <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/35">Platform</p>
-              <p className="mt-1 text-xs font-medium text-white/80">{meta.id === "others" ? "Nintendo DS · Your upload" : meta.label}</p>
+              <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/35">{rom.folder ? "Folder" : media ? "Media type" : "Platform"}</p>
+              <p className="mt-1 text-xs font-medium text-white/80">{rom.folder ? `${rom.folder.count} ${rom.folder.count === 1 ? "file" : "files"}` : media ? `${media.kind} · ${media.extension.toUpperCase()}` : meta.id === "others" ? `Nintendo DS · ${category === "Apps" ? "Apps" : "Your upload"}` : meta.label}</p>
             </div>
           </div>
 
@@ -127,7 +130,7 @@ export default function RomDetail({
               <div className="mb-3 flex flex-wrap gap-1.5 pr-8">
                 <Chip accent>{meta.short}</Chip>
                 <Chip>{rom.r}</Chip>
-                <Chip>{meta.id === "others" ? "Your upload" : categoryLabel(category)}</Chip>
+                <Chip>{categoryLabel(category)}</Chip>
               </div>
               <h2 id="rom-detail-title" className="pr-4 text-2xl font-semibold leading-tight tracking-tight text-white sm:text-[28px]">{rom.t}</h2>
               {(rom.g ?? []).length > 0 ? <p className="mt-2 text-xs text-white/40">{rom.g?.join(" · ")}</p> : null}
@@ -139,14 +142,14 @@ export default function RomDetail({
                 <dd className="text-sm font-medium text-white/80">{formatBytes(rom.s)}</dd>
               </div>
               <div>
-                <dt className="mb-1 text-[10px] font-medium uppercase tracking-wider text-white/35">Languages</dt>
-                <dd className="text-xs leading-relaxed text-white/80">{languages || "Not specified"}</dd>
+                <dt className="mb-1 text-[10px] font-medium uppercase tracking-wider text-white/35">{rom.folder || media ? "SD folder" : "Languages"}</dt>
+                <dd className="break-all text-xs leading-relaxed text-white/80">{rom.folder ? `${rom.folder.destination}/` : media ? `${media.directory}/` : languages || "Not specified"}</dd>
               </div>
             </dl>
 
             <div className="space-y-2">
               <div className="mb-3">
-                <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-white/35">File</p>
+                <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-white/35">{rom.folder ? `Folder transfer package · ${rom.folder.count} files` : "File"}</p>
                 <p className="break-all font-mono text-[10px] leading-relaxed text-white/55">{fileName}</p>
                 {meta.arch ? <p className="mt-1 text-[11px] text-white/35">Extracts to .{meta.out}</p> : null}
               </div>
@@ -156,20 +159,21 @@ export default function RomDetail({
 
             <div className="space-y-2">
               <SendToDeviceButton meta={meta} rom={rom} full />
+              {!media && !rom.folder ? <AddToCollectionButton meta={meta} rom={rom} full /> : null}
               <div className="flex flex-col gap-2 sm:flex-row">
                 <a href={downloadUrl(meta, rom)} target="_blank" rel="noopener noreferrer" className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-3 text-xs font-semibold text-white shadow-[0_4px_20px_-6px_rgba(139,61,255,0.65)] transition hover:bg-brand-400">
-                  <Icon name="download" className="h-4 w-4" />Download .{downloadExt}
+                  <Icon name="download" className="h-4 w-4" />{rom.folder ? "Download transfer package" : `Download .${downloadExt}`}
                 </a>
                 {meta.id === "others" ? null : <AddToQueueButton meta={meta} rom={rom} variant="full" className="flex-1" />}
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">
-
+                {rom.package ? <a href={rom.package} download className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-brand-400/30 px-4 py-3 text-xs font-medium text-brand-400 transition hover:bg-brand-500/10"><Icon name="download" className="h-4 w-4" />Download SD package .zip</a> : null}
                 {meta.id === "others" && onDelete ? <button type="button" onClick={onDelete} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-rose-300/20 px-4 py-3 text-xs font-medium text-rose-200/80 transition hover:border-rose-400/50 hover:bg-rose-500/10 hover:text-rose-100"><Icon name="trash" className="size-4" />Delete from Others</button> : null}
                 {meta.id !== "others" ? <a href={meta.source} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-3 text-xs font-medium text-white/60 transition hover:bg-white/5 hover:text-white">
                   View source<Icon name="arrow" className="h-3.5 w-3.5 -rotate-45" />
                 </a> : null}
               </div>
-              {meta.id === "others" ? <p className="text-[11px] leading-relaxed text-white/40">Already stored on this server. In DSiDrop, switch to Others to download or queue this game on your SD card.</p> : null}
+              {rom.folder ? <p className="text-[11px] leading-relaxed text-white/40">Requires DSiDrop 1.19.0 or newer.</p> : media ? <p className="text-[11px] leading-relaxed text-white/40">DSiDrop 1.17.0 or newer. Playback requires compatible DSi homebrew; files are not converted.</p> : meta.id === "others" ? <p className="text-[11px] leading-relaxed text-white/40">Already stored on this server. In DSiDrop, switch to Others to download or queue this game on your SD card.</p> : null}
             </div>
           </div>
         </div>

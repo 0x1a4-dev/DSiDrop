@@ -1,0 +1,1 @@
+Hier können sie den Homebrewlader auswählen, der standardmäßig beim Laden von NDS-Dateien benutzt werden soll. Den anderen Launcher können sie per Druck auf die Y-Taste benutzen. Bitte beachten Sie, dass nur SuperCard und GBAMP einen internen Lader haben.

@@ -1,5 +1,6 @@
 import { registerTypescript } from './test-support/typescript.mjs';
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
@@ -75,6 +76,24 @@ try {
   assert.equal(calls, 4, "Higher resolution has its own cache entry");
   assert.equal((await request("nds", nds)).status, 200, "Old clients still receive 64px covers");
   await assert.rejects(dsiCover(new URLSearchParams({ system: "nds", id: nds, size: "512" })), (error) => error.status === 400);
+
+  await mkdir("public/downloads/apps/covers", { recursive: true });
+  const app = Buffer.alloc(1024);
+  app.writeUInt32LE(512, 0x20); app.writeUInt32LE(256, 0x2c);
+  app.writeUInt32LE(768, 0x30); app.writeUInt32LE(256, 0x3c);
+  const appId = createHash("md5").update(app).digest("hex");
+  await writeFile("public/downloads/apps/Local App.nds", app);
+  await writeFile("public/downloads/apps/covers/local-app.png", png);
+  const library = await require(path.join(project, "src/lib/server/uploads.ts")).uploadedDataset();
+  assert.equal(library.meta.withCover, 1);
+  assert.equal(library.roms[0].c, "local-app");
+  const previousCalls = calls;
+  for (const size of ["64", "88"]) {
+    const local = await dsiCover(new URLSearchParams({ system: "others", id: appId, size }));
+    assert.equal(local.status, 200);
+    assert.equal((await local.arrayBuffer()).byteLength, size === "64" ? 8200 : 15500);
+  }
+  assert.equal(calls, previousCalls, "Local app covers never require an upstream fetch");
 
   globalThis.__dsiCovers.clear();
   globalThis.fetch = async () => new Response("", { headers: { "Content-Length": String(3 * 1024 * 1024) } });

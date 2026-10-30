@@ -16,6 +16,8 @@ static size_t responseSize, responseOffset, chunkSize, sendChunk;
 static bool cancelPoll, cancelYield, cancelAfterSleep;
 static int receiveError;
 static char response[4096];
+static char outbound[8192];
+static size_t outboundSize;
 
 static uint64_t fakeTick(void) { return ticks; }
 bool appPoll(void) {
@@ -49,6 +51,8 @@ static ssize_t fakeSend(int fd, const void *data, size_t size, int flags) {
     (void)fd; (void)data; (void)flags; sends++;
     if (ticks < sendReady) { errno = EAGAIN; return -1; }
     if (size > sendChunk) size = sendChunk;
+    assert(outboundSize + size < sizeof(outbound));
+    memcpy(outbound + outboundSize, data, size); outboundSize += size;
     sendReady = ticks + sendGap;
     return size;
 }
@@ -80,6 +84,7 @@ static void reset(void) {
     responseOffset = 0; chunkSize = sendChunk = sizeof(response);
     cancelPoll = cancelYield = cancelAfterSleep = false; receiveError = 0;
     lastError[0] = 0;
+    memset(outbound, 0, sizeof(outbound)); outboundSize = 0;
     responseSize = snprintf(response, sizeof(response),
         "HTTP/1.1 200 OK\r\nContent-Length: 9\r\n\r\nhomebrew!");
 }
@@ -160,5 +165,19 @@ int main(void) {
     assert(ticks > 1000000 && sends > 1 && !*lastError);
     httpClose(&http);
     puts("HTTP: elapsed connect/send timeouts and deadline reset after send progress passed");
+    reset(); sendChunk = 2;
+    FILE *save = tmpfile(); assert(save);
+    assert(fwrite("backup!", 1, 7, save) == 7); rewind(save);
+    assert(httpUpload("/api/saves/sync", save, 7));
+    assert(strstr(outbound, "PUT /api/saves/sync HTTP/1.1\r\n"));
+    assert(strstr(outbound, "Content-Length: 7\r\n"));
+    char *body = strstr(outbound, "\r\n\r\n"); assert(body);
+    assert(outboundSize == (size_t)(body + 4 - outbound) + 7 && !memcmp(body + 4, "backup!", 7));
+    reset(); rewind(save); cancelYield = true;
+    assert(!httpUpload("/api/saves/sync", save, 7) && closes == 1);
+    reset(); rewind(save);
+    assert(!httpUpload("/api/saves/sync", save, 8) && closes == 1 && strstr(lastError, "read save"));
+    fclose(save);
+    puts("HTTP: save upload content length, fragmented sends, cancellation and truncated SD file passed");
     return 0;
 }

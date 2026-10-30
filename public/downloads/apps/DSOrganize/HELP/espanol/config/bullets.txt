@@ -1,0 +1,1 @@
+Cuando está activada, está opción automáticamente insertará una viñeta en la siguiente linea de la lista de tareas después de haber pulsado Enter.

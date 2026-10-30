@@ -1,0 +1,1 @@
+This setting allows you to manually type in the SSID of your access point.  It is easier to do an AP list, but if you must, type it in here.  Please note that homebrew is not currently compatible with routers that have SSID broadcast disabled.

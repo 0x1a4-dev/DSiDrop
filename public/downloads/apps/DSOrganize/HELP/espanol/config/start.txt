@@ -1,0 +1,1 @@
+Este ajuste cambia la pantalla que DSOrganize muestra al arrancar por primera vez. La base de datos Homebrew no está disponible como una opción ya que sería simplemente estúpido.

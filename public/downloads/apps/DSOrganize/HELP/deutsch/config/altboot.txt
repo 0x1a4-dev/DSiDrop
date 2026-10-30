@@ -1,0 +1,1 @@
+Hier können Sie einstellen, welcher Homebrewlader als Alternative genutzt wird, wenn sie NDS-Dateien im Dateimanager starten. Bitte beachten Sie, dass nur SuperCard und GBAMP einen internen Lader haben.

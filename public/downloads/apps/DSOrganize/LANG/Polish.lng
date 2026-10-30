@@ -1,0 +1,219 @@
+; Sample language file by Shaun taylor
+; Version 2.2
+
+[Errors]
+NoVCard=No Nie znaleziono plikow VCard...
+NoFAT=Nie uzywasz karty kompatybilnej z Chishm's FAT library.  Uruchom ten program na GBAMP lub innej kompatybilnej karcie!
+CreateDir=Katalog 'DSOrganize' nie zostal znaleziony! Stworzono nowy wedlug ustawien domyslnych.
+NoFiles=Katalog jest pusty...
+RenderError=Wystapil blad podczas renderingu pliku.	
+Preview=Tryb podgladu nie jest dostepny. Obraz jest zbyt maly.
+NoToDo=Brak listy zadan...
+NoScribble=Brak rysunkow...
+NoId3=Nie ma danych ID3 v1.1!
+
+[Dates]
+Sunday=Niedziela
+Monday=Poniedzialek
+Tuesday=Wtorek
+Wednesday=Sroda
+Thursday=Czwartek
+Friday=Piatek
+Saturday=Sobota
+	
+January=Styczen
+February=Luty
+March=Marzec
+April=Kwiecien
+May=Maj
+June=Czerwiec
+July=Lipiec
+August=Sierpien
+September=Wrzesien
+October=Pazdziernik
+November=Listopad
+December=Grudzien
+
+AM=AM
+PM=PM
+
+[Address]
+FirstName=Imie
+LastName=Nazwisko
+Nickname=Pseudonim
+HomePhone=Tel. Domowy
+WorkPhone=Tel. Sluzbowy
+CellPhone=Nr komorki
+Address=Adres
+City=Miasto
+State=Woj.
+Zip=Kod pocztowy
+EMail=E-Mail
+Comment=Notatka
+
+[Navigation]
+Home=Ekran glowny
+Welcome=Czesc
+Previous=Wstecz
+Next=Dalej
+EditReminder=Edycja przyp.
+ViewDay=Pokaz dzien
+DayView=Terminarz
+Save=Zapisz
+Back=Cofnij
+EditSelected=Edycja
+Calendar=Kalendarz
+Create=Stworz
+PreviousField=Poprzednie pole
+NextField=Nastepne pole
+Configuration=Konfiguracja
+AddressBook=Ksiazka adresowa
+Language=Jezyk
+StartScreen=Ekran uruchamiania
+TimeFormat=Format czasu
+NameFormat=Format imion
+First=Imie
+Last=Nazwisko
+Unknown=Nieznane
+Browser=Przegladarka
+Open=Otworz
+Launch=Uruchom
+PrevDay=Poprzedni
+NextDay=Nastepny
+Up=Gora
+NewFile=Nowy plik
+Delete=Kasuj
+Rename=Zmien nazwe
+Copy=Kopiuj
+Paste=Wklej
+More=Wiecej
+Confirm=Potwierdz
+Filename=Nazwa pliku
+Calculator=Kalkulator
+Yes=Tak
+No=Nie
+ShowHidden=Pokaz pliki ukryte
+Memory=Pamiec
+Edit=Edycja
+PageUp=Strona w gore
+PageDown=Strona w dol
+Working=Dziala
+ChoosePal=Wybierz palete
+Reset=Reset
+ToDo=Zadania
+Title=Tytul
+ScribblePad=Rysunki
+SaveFormat=Format zapisywania rysunkow
+Pause=Pauza
+Play=Odtwarzanie
+SoundMode=Tryb odtwarzania
+OneShot=Pojedynczy plik
+Sequential=Kolejno
+NextFile=Nastepny
+PrevFile=Poprzedni
+RandFile=Losowy
+Hold=Wstrzymaj
+DataBase=Homebrew Database
+View=Pokaz
+Hide=Pokazuj/chowaj ukryte
+Done=Koniec
+Cancel=Anuluj
+Date=Data
+Version=Wersja
+Size=Rozmiar
+HTMLMode=Tryb HTML
+SecondClick=Akcja po podwojnym kliknieciu
+DateFormat=Format daty
+TextOnly=Tylko tekst
+Extended=Rozszerzony
+NameSort=Sortuj wg nazwy
+DateSort=Sortuj wg daty
+Swap=Zamien
+Record=Nagrywaj
+RecordMode=Dyktafon
+Playback=Odtwarzanie
+Length=Dlugosc
+Stop=Stop
+IRC=IRC
+Send=Wyslij
+Disconnect=Rozlacz
+Reconnect=Polacz ponownie
+LaunchAlt=Uruchom inny
+MKDir=Nowy folder
+Cut=Wytnij
+DefaultHomebrew=Domyslny katalog homebrew
+Proxy=HTTP Proxy
+Drag=Przeciagnij ikony stylusem aby przystosowac pulpit.
+AutoConnect=Autolaczenie z serwerem IRC
+IRCNickname=Nazwa IRC
+IRCServer=Serwer IRC
+None=Brak
+SwapAB=Zamien przyciski A/B
+SwapBoot=Domyslna metoda bootowania
+AutoBullet=Automatyczne przypomnienia w liscie zadan
+Volume=Glosnosc
+NewDir=Nowy katalog
+
+[Regional]
+Numbers=1234567890-=
+Symbols=!@#$%^&*()_+
+Lowercase=qwertyuiopasdfghjklzxcvbnm,./;'[]
+Uppercase=QWERTYUIOPASDFGHJKLZXCVBNM<>?:"{}
+Special1=‡·‚„‰ÂËÈÍÎÏÌÓÔÒÚÛÙıˆ˘˙˚¸˝ °ø˛~ÊÁ
+Special2=¿¡¬√ƒ≈»… ÀÃÕŒœ—“”‘’÷Ÿ⁄€‹› °ø–ﬁﬂ∆«
+
+[Browser]
+FileSize=Rozmiar pliku
+FileType=Typ pliku
+NDSFile=Plik Nintendo DS
+TXTFile=Plik tekstowy
+VCFFile=vCard
+DPLFile=Plik Terminarza
+REMFile=Plik Przypomnienia
+PicFile=Obrazek
+Directory=Katalog
+Unknown=Nierozpoznany
+BINFile=Raw Mode 5
+TodoFile=Plik Listy Zadan
+SoundFile=Audio
+HBFile=Baza Danych
+PKGFile=Archiwum PKG
+
+[Id3]
+Title=Tytul
+Artist=Artysta
+Album=Album
+Genre=Rodzaj
+Comment=Komentarz
+Year=Rok
+Track=Numer utworu
+
+[Streaming]
+Buffer=Bufor
+Status=Status
+NotConnected=Niepolaczony.
+Associating=Przypisywanie...
+Connecting=Laczenie ze streamem...
+ErrorConnecting=Wystapil blad!
+Streaming=Strumieniowanie!
+Buffering=Buforowanie strumienia...
+
+[Database]
+ChangedDirectory=Zmieniono katalog
+AlreadyExists=Juz istnieje
+CreatedDirectory=Utworzono katalog
+StartedDownload=Rozpoczeto pobieranie
+ConnectingHost=Laczenie z hostem...
+Deleted=Skasowano
+MOTD=Wiadomosc dnia (MOTD)
+Description=Opis
+Retrieving=Pobieranie...
+ErrorRetrieving=Nie mozna pobrac.
+GettingPackage=Sprawdzam archiwum...
+FailedPackage=Nie mozna sprawdzic archiwum.
+Connecting=Laczenie...
+GetMOTD=Pobieranie Wiadomosci dnia (MOTDa)...
+GetList=Pobieranie listy...
+Download=Pobieranie
+NoDBEntries=Brak wpisow w Bazie danych!
+Refresh=Odswiez liste

@@ -1,0 +1,1 @@
+Este ajuste cambia la forma en que DSOrganize muestra todas las fechas, incluyendo las de la base de datos Homebrew.  Las fechas escritas también se ven afectadas por este ajuste, pero no aquellas escritas manualmente en cualquier pantalla.

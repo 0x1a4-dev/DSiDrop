@@ -1,0 +1,1 @@
+This setting changes the screen that shows when DSOrganize boots up the first time.  The homebrew database is not available as an option because that would be just stupid.

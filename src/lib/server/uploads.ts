@@ -2,12 +2,16 @@ import Busboy from "busboy";
 import { constants } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import { createReadStream, createWriteStream } from "node:fs";
-import { copyFile, link, mkdir, readFile, rename, rm, stat } from "node:fs/promises";
+import { copyFile, link, mkdir, readFile, readdir, rename, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { unstable_rethrow } from "next/navigation";
 import type { Dataset, Rom } from "../types";
+import { mediaInfo } from "../media";
+import { folderPath, MAX_FOLDER_FILES, MAX_FOLDER_SIZE, type UploadFolder } from "../upload-folder";
+import { buildUploadFolder } from "./upload-folder";
+import { themeCrc } from "./theme-package";
 import { ROMS_DIR } from "./rom-file";
 
 export const MAX_UPLOAD_SIZE = 512 * 1024 * 1024;
@@ -15,11 +19,13 @@ export const MAX_UPLOAD_BATCH_SIZE = 1024 * 1024 * 1024;
 export const MAX_UPLOAD_FILES = 20;
 const MAX_REQUEST_SIZE = MAX_UPLOAD_BATCH_SIZE + 1024 * 1024;
 const DIRECTORY = path.join(ROMS_DIR, "others");
+const APPS_DIRECTORY = path.resolve(process.env.APPS_DIR || path.join(process.cwd(), "public", "downloads", "apps"));
 const MANIFEST = path.join(DIRECTORY, "library.json");
 const ID = /^[a-f0-9]{32}$/;
-type Entry = { id: string; name: string; title: string; size: number; uploadedAt: string };
+type Entry = { id: string; name: string; title: string; size: number; uploadedAt: string; folder?: UploadFolder };
+const appCache = new Map<string, { mtime: number; entry: Entry }>();
 type Manifest = { version: 1; updatedAt: string; entries: Entry[] };
-type Staged = Entry & { temporary: string };
+type Staged = Entry & { temporary: string; crc?: number };
 type Locks = { tail: Promise<unknown> };
 const shared = globalThis as typeof globalThis & { __uploadLocks?: Map<string, Locks> };
 const locks = (shared.__uploadLocks ??= new Map());
@@ -41,8 +47,8 @@ function validateId(id: string | null): asserts id is string {
   if (!id || !ID.test(id)) throw new UploadError("Invalid uploaded game ID.");
 }
 
-function filePath(id: string): string {
-  return path.join(/* turbopackIgnore: true */ DIRECTORY, `${id}.nds`);
+function filePath(id: string, name: string): string {
+  return path.join(/* turbopackIgnore: true */ DIRECTORY, `${id}.${name.endsWith(".folder") ? "folder" : mediaInfo(name)?.extension ?? "nds"}`);
 }
 
 async function readManifest(): Promise<Manifest> {
@@ -55,22 +61,81 @@ async function readManifest(): Promise<Manifest> {
   const manifest = JSON.parse(raw) as Manifest;
   if (manifest.version !== 1 || !Array.isArray(manifest.entries) || manifest.entries.some((entry) =>
     !ID.test(entry.id) || typeof entry.name !== "string" || typeof entry.title !== "string" ||
-    !Number.isSafeInteger(entry.size) || entry.size < 512 || entry.size > MAX_UPLOAD_SIZE)) {
+    (!entry.folder && !/\.nds$/i.test(entry.name) && !mediaInfo(entry.name)) ||
+    (entry.folder && (!entry.name.endsWith(".folder") || !Array.isArray(entry.folder.files) || !entry.folder.files.length || entry.folder.files.length > MAX_FOLDER_FILES || !["Uploaded", "Multimedia"].includes(entry.folder.category))) ||
+    !Number.isSafeInteger(entry.size) || entry.size < (entry.folder || mediaInfo(entry.name) ? 1 : 512) || entry.size > MAX_UPLOAD_SIZE)) {
     throw new Error("Invalid local library manifest");
   }
   return manifest;
 }
 
-function asDataset(manifest: Manifest): Dataset {
-  const roms: Rom[] = manifest.entries.map((entry) => ({
-    m: entry.id, n: entry.title, t: entry.title, r: "Unknown", s: entry.size, c: null, g: ["Uploaded"],
-  })).sort((a, b) => a.t.localeCompare(b.t, "en") || a.m.localeCompare(b.m));
+async function appEntries(): Promise<Entry[]> {
+  let files;
+  try { files = await readdir(APPS_DIRECTORY, { withFileTypes: true }); }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw error;
+  }
+  const entries: Entry[] = [];
+  const titles: Record<string, string> = { "notpipe.nds": "notPipe DSi", "dsorganize.nds": "DSOrganize 3.2", "pkmn-chest.nds": "pkmn-chest" };
+  for (const file of files) {
+    if (!file.isFile() || !/\.nds$/i.test(file.name)) continue;
+    const location = path.join(APPS_DIRECTORY, file.name);
+    const info = await stat(location);
+    if (info.size < 512 || info.size > MAX_UPLOAD_SIZE) continue;
+    const cached = appCache.get(file.name);
+    if (cached?.mtime === info.mtimeMs && cached.entry.size === info.size) {
+      entries.push(cached.entry);
+      continue;
+    }
+    const digest = createHash("md5");
+    let header = Buffer.alloc(0);
+    for await (const chunk of createReadStream(location)) {
+      digest.update(chunk);
+      if (header.length < 512) header = Buffer.concat([header, chunk.subarray(0, 512 - header.length)]);
+    }
+    try { validateHeader(header, info.size); }
+    catch (error) { if (error instanceof UploadError) continue; throw error; }
+    const entry: Entry = { id: digest.digest("hex"), name: file.name,
+      title: titles[file.name.toLowerCase()] ?? file.name.slice(0, -4), size: info.size, uploadedAt: info.mtime.toISOString() };
+    appCache.set(file.name, { mtime: info.mtimeMs, entry });
+    entries.push(entry);
+  }
+  return [...new Map(entries.map((entry) => [entry.id, entry])).values()];
+}
+
+async function asDataset(manifest: Manifest): Promise<Dataset> {
+  const apps = await appEntries();
+  const hasDsOrganizePackage = await stat(path.join(APPS_DIRECTORY, "DSOrganize_3_2.zip")).then((info) => info.isFile(), () => false);
+  const appIds = new Set(apps.map((entry) => entry.id));
+  const roms: Rom[] = manifest.entries.filter((entry) => !appIds.has(entry.id)).map((entry) => {
+    const previewNames = entry.folder?.category === "Multimedia" ? entry.folder.files.filter((file) => file.size > 0).map((file) => file.name) : [entry.name];
+    const thumbnail = previewNames.some((name) => mediaInfo(name)?.kind === "Image");
+    return {
+      m: entry.id, n: entry.title, t: entry.title, r: "Unknown", s: entry.size, c: thumbnail ? entry.id : null,
+      ...(thumbnail ? { thumbnail: true as const } : {}),
+      g: [entry.folder?.category ?? (mediaInfo(entry.name) ? "Multimedia" : "Uploaded")],
+      ...(entry.folder ? { folder: { destination: entry.folder.destination, count: entry.folder.files.length }, e: "folder" } : {}),
+      ...(mediaInfo(entry.name) ? { media: entry.name, e: mediaInfo(entry.name)!.extension } : {}),
+    };
+  });
+  roms.push(...await Promise.all(apps.map(async (entry): Promise<Rom> => {
+    const cover = entry.name.slice(0, -4).toLowerCase().replace(/[^a-z0-9-]/g, "-");
+    const hasCover = await stat(path.join(APPS_DIRECTORY, "covers", `${cover}.png`)).then((info) => info.isFile(), () => false);
+    return { m: entry.id, n: entry.title, t: entry.title, r: "World", s: entry.size, c: hasCover ? cover : null, g: ["Apps"],
+      ...(entry.name.toLowerCase() === "dsorganize.nds" && hasDsOrganizePackage ? { package: "/downloads/apps/DSOrganize_3_2.zip" } : {}),
+    };
+  })));
+  roms.sort((a, b) => a.t.localeCompare(b.t, "en") || a.m.localeCompare(b.m));
+  const uploaded = roms.filter((rom) => rom.g?.includes("Uploaded")).length;
+  const multimedia = roms.filter((rom) => rom.g?.includes("Multimedia")).length;
   return { meta: {
     id: "others", label: "Others", short: "Others", ext: "nds", arch: null, out: "nds", checksum: "md5",
-    source: "/?sys=others", download: "/api/library/file?id=", coverSource: "", coverBase: "",
-    generatedAt: manifest.updatedAt, total: roms.length, withCover: 0,
-    regions: roms.length ? [{ name: "Unknown", count: roms.length }] : [],
-    tags: roms.length ? [{ name: "Uploaded", count: roms.length }] : [], languages: [],
+    source: "/?sys=others", download: "/api/library/file?id=", coverSource: "NDS application icons", coverBase: "/downloads/apps/covers/",
+    generatedAt: [manifest.updatedAt, ...apps.map((entry) => entry.uploadedAt)].sort().at(-1)!, total: roms.length, withCover: roms.filter((rom) => rom.c).length,
+    regions: [...(uploaded + multimedia ? [{ name: "Unknown", count: uploaded + multimedia }] : []), ...(apps.length ? [{ name: "World", count: apps.length }] : [])],
+    tags: [...(uploaded ? [{ name: "Uploaded", count: uploaded }] : []), ...(apps.length ? [{ name: "Apps", count: apps.length }] : []),
+      ...(multimedia ? [{ name: "Multimedia", count: multimedia }] : [])], languages: [],
   }, roms };
 }
 
@@ -78,28 +143,31 @@ export async function uploadedDataset(): Promise<Dataset> {
   return asDataset(await readManifest());
 }
 
-export async function getUploadedFile(id: string): Promise<{ file: string; name: string; title: string; size: number }> {
+export async function getUploadedFile(id: string): Promise<{ file: string; name: string; title: string; size: number; folder?: UploadFolder }> {
   validateId(id);
+  const app = (await appEntries()).find((entry) => entry.id === id);
+  if (app) return { file: path.join(APPS_DIRECTORY, app.name), name: app.name, title: app.title, size: app.size };
   const entry = (await readManifest()).entries.find((item) => item.id === id);
   if (!entry) throw new UploadError("The uploaded game was not found.", 404);
-  const file = filePath(id);
+  const file = filePath(id, entry.name);
   let info;
   try { info = await stat(file); }
   catch { throw new UploadError("The uploaded game file is missing from the PC.", 404); }
   if (!info.isFile() || info.size !== entry.size) throw new UploadError("The uploaded game file has changed on the PC. Restore the original file before retrying.", 409);
-  return { file, name: entry.name, title: entry.title, size: entry.size };
+  return { file, name: entry.name, title: entry.title, size: entry.size, ...(entry.folder ? { folder: entry.folder } : {}) };
 }
 
 function safeUploadName(value: string): string {
   if (!value || /[/\\\x00-\x1f\x7f]/.test(value)) throw new UploadError("Upload a file name without folders or control characters.");
   const name = value.normalize("NFC").trim();
-  if (!/\.nds$/i.test(name)) throw new UploadError("Only .nds files can be added to Others.", 415);
-  const title = name.slice(0, -4).replace(/[<>:"|?*]/g, "_").replace(/^[. ]+|[. ]+$/g, "").slice(0, 160);
-  if (!title) throw new UploadError("The uploaded game needs a file name.");
-  return `${title}.nds`;
+  const extension = mediaInfo(name)?.extension ?? (/\.nds$/i.test(name) ? "nds" : null);
+  if (!extension) throw new UploadError("Choose an NDS file or a supported video, music or image file.", 415);
+  const title = name.slice(0, -extension.length - 1).replace(/[<>:"|?*]/g, "_").replace(/^[. ]+|[. ]+$/g, "").slice(0, 160);
+  if (!title) throw new UploadError("The uploaded file needs a file name.");
+  return `${title}.${extension}`;
 }
 
-function validateHeader(header: Buffer, size: number): void {
+export function validateHeader(header: Buffer, size: number): void {
   if (size < 512 || header.length < 512 || ![0, 2, 3].includes(header[0x12]))
     throw new UploadError("This file is not a valid Nintendo DS ROM.", 415);
   const ranges = [0x20, 0x30].map((offset) => ({ start: header.readUInt32LE(offset), length: header.readUInt32LE(offset + 12) }));
@@ -131,6 +199,7 @@ export async function deleteUploaded(request: Request): Promise<{ deleted: strin
   sameOrigin(request);
   const id = new URL(request.url).searchParams.get("id");
   validateId(id);
+  if ((await appEntries()).some((entry) => entry.id === id)) throw new UploadError("Bundled apps cannot be deleted from the upload library.", 403);
 
   const run = lock.tail.then(async () => {
     const manifest = await readManifest();
@@ -140,7 +209,8 @@ export async function deleteUploaded(request: Request): Promise<{ deleted: strin
     const temporaryManifest = path.join(DIRECTORY, `.manifest-${token}.part`);
     const rollbackManifest = path.join(DIRECTORY, `.manifest-${token}-rollback.part`);
     const removedFile = path.join(DIRECTORY, `.delete-${token}.part`);
-    const file = filePath(id);
+    const entry = manifest.entries.find((item) => item.id === id)!;
+    const file = filePath(id, entry.name);
     let moved = false;
     let published = false;
     try {
@@ -153,7 +223,8 @@ export async function deleteUploaded(request: Request): Promise<{ deleted: strin
       await rename(temporaryManifest, MANIFEST);
       published = true;
       if (moved) await rm(removedFile);
-      return { deleted: id, dataset: asDataset(updated) };
+      await rm(path.join(DIRECTORY, ".thumbnails", `${id}.jpg`), { force: true }).catch(() => undefined);
+      return { deleted: id, dataset: await asDataset(updated) };
     } catch (error) {
       if (moved) await rename(removedFile, file);
       if (published) await rename(rollbackManifest, MANIFEST);
@@ -179,8 +250,8 @@ async function commit(staged: Staged[], signal: AbortSignal): Promise<{ uploaded
     try {
       for (const item of staged) {
         if (signal.aborted) throw new UploadError("The upload was canceled.", 499);
-        const recorded = entries.some((entry) => entry.id === item.id);
-        const destination = filePath(item.id);
+        const recorded = entries.find((entry) => entry.id === item.id);
+        const destination = filePath(item.id, recorded?.name ?? item.name);
         if (recorded) {
           try {
             const info = await stat(destination);
@@ -205,7 +276,7 @@ async function commit(staged: Staged[], signal: AbortSignal): Promise<{ uploaded
           for await (const chunk of createReadStream(destination)) existing.update(chunk);
           if (existing.digest("hex") !== item.id) throw new UploadError("An existing library file has conflicting contents.", 409);
         }
-        if (!recorded) entries.push({ id: item.id, name: item.name, title: item.title, size: item.size, uploadedAt: item.uploadedAt });
+        if (!recorded) entries.push({ id: item.id, name: item.name, title: item.title, size: item.size, uploadedAt: item.uploadedAt, ...(item.folder ? { folder: item.folder } : {}) });
         uploaded++;
       }
       if (uploaded) {
@@ -215,9 +286,9 @@ async function commit(staged: Staged[], signal: AbortSignal): Promise<{ uploaded
         await pipeline(Readable.from([JSON.stringify(updated, null, 2)]), output);
         if (signal.aborted) throw new UploadError("The upload was canceled.", 499);
         await rename(temporaryManifest, MANIFEST);
-        return { uploaded, duplicates, dataset: asDataset(updated) };
+        return { uploaded, duplicates, dataset: await asDataset(updated) };
       }
-      return { uploaded, duplicates, dataset: asDataset(manifest) };
+      return { uploaded, duplicates, dataset: await asDataset(manifest) };
     } catch (error) {
       await Promise.all(added.map((file) => rm(file, { force: true })));
       throw error;
@@ -229,14 +300,17 @@ async function commit(staged: Staged[], signal: AbortSignal): Promise<{ uploaded
 
 export async function receiveUploads(request: Request): Promise<{ uploaded: number; duplicates: number; dataset: Dataset }> {
   sameOrigin(request);
-  if (!request.body) throw new UploadError("Choose one or more .nds files to upload.");
+  const mode = new URL(request.url).searchParams.get("folder");
+  if (mode !== null && mode !== "uploaded" && mode !== "multimedia") throw new UploadError("Choose a valid folder category.");
+  const fileLimit = mode ? MAX_FOLDER_FILES : MAX_UPLOAD_FILES;
+  if (!request.body) throw new UploadError("Choose one or more files to upload.");
   const contentLength = Number(request.headers.get("content-length"));
   if (contentLength > MAX_REQUEST_SIZE) throw new UploadError("Each upload batch must be 1 GiB or smaller.", 413);
   let parser;
   try {
     parser = Busboy({ headers: { "content-type": request.headers.get("content-type") ?? "" }, preservePath: true, defParamCharset: "utf8",
-      limits: { fileSize: MAX_UPLOAD_SIZE + 1, files: MAX_UPLOAD_FILES, fields: 0, parts: MAX_UPLOAD_FILES + 1 } });
-  } catch { throw new UploadError("Send .nds files using a multipart form upload."); }
+      limits: { fileSize: MAX_UPLOAD_SIZE + 1, files: fileLimit, fields: 0, parts: fileLimit + 1 } });
+  } catch { throw new UploadError("Send files using a multipart form upload."); }
   await mkdir(DIRECTORY, { recursive: true });
   const temporaryFiles: string[] = [];
   const staged: Staged[] = [];
@@ -245,20 +319,21 @@ export async function receiveUploads(request: Request): Promise<{ uploaded: numb
   let failure: unknown;
   let payloadBytes = 0;
   const fail = (error: unknown) => { failure ??= error; };
-  parser.on("filesLimit", () => fail(new UploadError(`Upload no more than ${MAX_UPLOAD_FILES} files at a time.`, 413)));
+  parser.on("filesLimit", () => fail(new UploadError(`Upload no more than ${fileLimit} files at a time.`, 413)));
   parser.on("fieldsLimit", () => fail(new UploadError("Only file fields are supported.")));
-  parser.on("partsLimit", () => fail(new UploadError(`Upload no more than ${MAX_UPLOAD_FILES} files at a time.`, 413)));
+  parser.on("partsLimit", () => fail(new UploadError(`Upload no more than ${fileLimit} files at a time.`, 413)));
   parser.on("file", (field, stream, info) => {
     streams.push(stream);
     let name: string;
     try {
-      if (field !== "files") throw new UploadError("Use the files field for .nds uploads.");
-      name = safeUploadName(info.filename ?? "");
+      if (field !== "files") throw new UploadError("Use the files field for uploads.");
+      name = mode ? folderPath(info.filename ?? "") : safeUploadName(info.filename ?? "");
     } catch (error) { fail(error); stream.resume(); return; }
     const temporary = path.join(DIRECTORY, `.upload-${randomUUID()}.part`);
     temporaryFiles.push(temporary);
     const digest = createHash("md5");
     let size = 0;
+    let crc = 0;
     let header = Buffer.alloc(0);
     let truncated = false;
     stream.on("limit", () => { truncated = true; });
@@ -266,14 +341,20 @@ export async function receiveUploads(request: Request): Promise<{ uploaded: numb
       size += chunk.length;
       payloadBytes += chunk.length;
       if (payloadBytes > MAX_UPLOAD_BATCH_SIZE) return callback(new UploadError("Each upload batch must be 1 GiB or smaller.", 413));
+      if (mode && payloadBytes > MAX_FOLDER_SIZE) return callback(new UploadError("Each folder must be 512 MiB or smaller.", 413));
       digest.update(chunk);
+      if (mode) crc = themeCrc(chunk, crc);
       if (header.length < 512) header = Buffer.concat([header, chunk.subarray(0, 512 - header.length)]);
       callback(null, chunk);
     } });
     tasks.push(pipeline(stream, meter, createWriteStream(temporary, { flags: "wx" }), { signal: request.signal }).then(() => {
-      if (truncated || size > MAX_UPLOAD_SIZE) throw new UploadError("Each .nds file must be 512 MiB or smaller.", 413);
-      validateHeader(header, size);
-      staged.push({ id: digest.digest("hex"), name, title: name.slice(0, -4), size, uploadedAt: new Date().toISOString(), temporary });
+      if (truncated || size > MAX_UPLOAD_SIZE) throw new UploadError("Each file must be 512 MiB or smaller.", 413);
+      if (mode) {
+        if (/\.nds$/i.test(name)) validateHeader(header, size);
+      } else if (mediaInfo(name)) {
+        if (!size) throw new UploadError("Empty media files cannot be uploaded.", 415);
+      } else validateHeader(header, size);
+      staged.push({ id: digest.digest("hex"), name, title: name.slice(0, name.lastIndexOf(".")), size, uploadedAt: new Date().toISOString(), temporary, crc });
     }).catch((error) => { fail(error); parser.destroy(error as Error); }));
   });
   let received = 0;
@@ -294,7 +375,14 @@ export async function receiveUploads(request: Request): Promise<{ uploaded: numb
       if (failure instanceof UploadError) throw failure;
       throw new UploadError("The upload was interrupted or the multipart data is incomplete.");
     }
-    if (!staged.length) throw new UploadError("Choose one or more .nds files to upload.");
+    if (!staged.length) throw new UploadError("Choose one or more files to upload.");
+    if (mode) {
+      let folder;
+      try { folder = await buildUploadFolder(staged.map((file) => ({ ...file, crc: file.crc! })), mode === "multimedia", DIRECTORY, request.signal); }
+      catch (error) { throw new UploadError(error instanceof Error ? error.message : "Folder import failed."); }
+      temporaryFiles.push(folder.temporary);
+      return await commit([folder], request.signal);
+    }
     return await commit(staged, request.signal);
   } finally { await Promise.all(temporaryFiles.map((file) => rm(file, { force: true }))); }
 }

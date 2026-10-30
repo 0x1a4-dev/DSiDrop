@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 
 import { coverUrl } from "@/lib/roms";
+import { mediaInfo } from "@/lib/media";
 import type { DatasetMeta, Rom } from "@/lib/types";
 
 function initials(title: string): string {
@@ -30,21 +31,23 @@ export default function CoverImage({
   const url = coverUrl(meta, rom);
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const missing = !url || failedUrl === url;
+  const media = mediaInfo(rom.media ?? "");
 
   return (
     <div className={`relative overflow-hidden bg-ink-900 ${className}`}>
       {missing ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[radial-gradient(ellipse_at_top_right,#26133d,#100c17_70%)]">
-          <span className="text-5xl font-bold tracking-tighter text-brand-400/25">
-            {initials(rom.t)}
+          <span className={`${media ? "text-3xl" : "text-5xl"} font-bold tracking-tighter text-brand-400/25`}>
+            {media ? media.extension.toUpperCase() : initials(rom.t)}
           </span>
           <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/35">
-            No cover art
+            {rom.folder ? "Folder" : media ? media.kind : "No cover art"}
           </span>
         </div>
       ) : (
         <Image
           src={url}
+          unoptimized={Boolean(rom.thumbnail)}
           alt={`${rom.t} cover art`}
           fill
           sizes={sizes}

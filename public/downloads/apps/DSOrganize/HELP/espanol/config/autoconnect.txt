@@ -1,0 +1,1 @@
+Cuando está activado, este ajuste permite al IRC de DSOrganize conectar automáticamente con tu servidor IRC preferido después de haber obtenido conexión de un P.A.

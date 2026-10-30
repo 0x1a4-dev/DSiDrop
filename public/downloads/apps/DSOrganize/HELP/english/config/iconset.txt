@@ -1,0 +1,1 @@
+This setting will allow you to customize the icons inside DSOrganize.  Please see the readme for instructions on making your own icon set.  Changes to this setting will be reflected upon reboot.

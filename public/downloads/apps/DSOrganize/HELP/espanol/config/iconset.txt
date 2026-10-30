@@ -1,0 +1,1 @@
+Este ajuste te permite personalizar los iconos usados por DSOrganize.  Por favor mira el readme para conocer la forma de hacer tu propio set de iconos.  Los cambios en este ajuste podrán apreciarse después de un reinicio.

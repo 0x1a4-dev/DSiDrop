@@ -1,0 +1,1 @@
+Hier können sie einstellen, ob die Zeit im 12-Stunden-Format oder im 24-Stunden-Format angezeigt werden soll.

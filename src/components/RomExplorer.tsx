@@ -5,10 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import Icon from "./Icon";
+import SystemPicker from "./SystemPicker";
 import { loadQueue, onQueueChange, onQueueOpen, openQueuePanel } from "@/lib/queue-client";
 import UploadLibrary from "./UploadLibrary";
 import DSiDropPanel from "./DSiDropPanel";
 import DevicesButton from "./DevicesButton";
+import ThemeExplorer from "./ThemeExplorer";
+import CollectionsPanel, { CollectionsButton } from "./CollectionsPanel";
 import DeleteUploadDialog from "./DeleteUploadDialog";
 import { onDevicesOpen } from "@/lib/device-client";
 
@@ -264,7 +267,7 @@ export default function RomExplorer() {
     setLibraryNotice(null);
     setError(null);
     setData(library);
-    setQuery(""); setFilters(EMPTY_FILTERS); setPage(1);
+    setQuery(""); setFilters({ ...EMPTY_FILTERS, type: filters.type === "Multimedia" ? "Multimedia" : "all" }); setPage(1);
     setSystems((current) => current?.map((system) => system.id === "others" ? { ...system, total: library.meta.total, generatedAt: library.meta.generatedAt } : system) ?? null);
   };
 
@@ -287,6 +290,7 @@ export default function RomExplorer() {
           <nav aria-label="Main navigation" className="header-nav">
             <a href="#library" className="header-library"><Icon name="grid" className="h-4 w-4" />Library</a>
             <DevicesButton />
+            <CollectionsButton />
             <button type="button" onClick={openQueuePanel} className="header-button">
               <Icon name="queue" className="h-4 w-4" /><span>Queue</span>
               {queueCount > 0 ? <span className="queue-badge">{queueCount}</span> : null}
@@ -314,7 +318,8 @@ export default function RomExplorer() {
         <section id="library" className="catalog-section" aria-label="Game library">
           <div className="system-bar">
             <div role="group" aria-label="Choose a system" className="system-tabs">
-              {(systems ?? []).map((system) => {
+              <SystemPicker systems={(systems ?? []).filter((system) => system.id !== "others")} selectedId={activeSystem?.id} onSelect={selectSystem} />
+              {(systems ?? []).filter((system) => system.id === "others").map((system) => {
                 const active = system.id === activeSystem?.id;
                 return <button key={system.id} type="button" onClick={() => selectSystem(system.id)} aria-pressed={active} className={`system-tab ${system.id === "others" ? "personal-system-tab" : ""} ${active ? "is-active" : ""}`}>
                   <span>{system.short}</span><span className="system-count">{system.total.toLocaleString("en-US")}</span>
@@ -326,7 +331,11 @@ export default function RomExplorer() {
           </div>
 
           {systemId === "dsidrop" ? <DSiDropPanel /> : <>
-          {systemId === "others" ? <UploadLibrary onUploaded={uploaded} /> : null}
+          {systemId === "others" ? <div role="group" aria-label="Others category" className="flex flex-wrap gap-1 border-b border-white/10 py-3">
+            {[["all", "All"], ["Apps", "Apps"], ["Uploaded", "Your uploads"], ["Multimedia", "Multimedia"], ["Themes", "Themes"]].map(([value, label]) => <button key={value} type="button" aria-pressed={filters.type === value} onClick={() => setFilter({ type: value })} className={`inline-flex h-9 items-center gap-2 rounded-md px-4 text-xs font-medium transition ${filters.type === value ? "bg-brand-500/20 text-brand-400" : "text-white/55 hover:bg-white/5 hover:text-white"}`}><Icon name={value === "Apps" ? "grid" : value === "Uploaded" ? "plus" : value === "Multimedia" ? "play" : "filter"} className="size-3.5" />{label}{value !== "Themes" ? <span className="text-[10px] tabular-nums opacity-60">{value === "all" ? data?.meta.total ?? 0 : categoryCounts[value] ?? 0}</span> : null}</button>)}
+          </div> : null}
+          {systemId === "others" && filters.type === "Themes" ? <ThemeExplorer /> : <>
+          {systemId === "others" ? <UploadLibrary key={filters.type === "Multimedia" ? "media" : "nds"} onUploaded={uploaded} multimedia={filters.type === "Multimedia"} /> : null}
           {systemId === "others" && libraryNotice ? <div role="status" className="mt-4 flex items-center gap-3 rounded-xl border border-emerald-400/15 bg-emerald-400/5 px-4 py-3 text-xs text-emerald-200"><Icon name="check" className="size-4 shrink-0" /><span className="min-w-0 flex-1 break-words">{libraryNotice}</span><button type="button" aria-label="Dismiss deletion notice" onClick={() => setLibraryNotice(null)} className="p-1 text-white/40 hover:text-white"><Icon name="close" className="size-4" /></button></div> : null}
           <div className="catalog-toolbar">
             <div className="search-field">
@@ -358,16 +367,18 @@ export default function RomExplorer() {
                   <h2><strong>{sorted.length.toLocaleString("en-US")}</strong> {sorted.length === 1 ? "game" : "games"}{normalizedQuery ? <> matching <span className="text-white/80">“{query}”</span></> : <span className="text-white/35"> · {activeSystem?.label}</span>}</h2>
                   <div className="flex items-center gap-4">{activeFilterCount || query ? <button type="button" className="text-xs font-medium text-brand-400 hover:text-white" onClick={() => { resetFilters(); setQuery(""); }}>Clear all</button> : null}<span className="text-xs text-white/35">Page {safePage} of {totalPages}</span></div>
                 </div>
-                {pageRoms.length === 0 ? <div className="empty-results"><span className="empty-results-icon"><Icon name={systemId === "others" && !data.roms.length ? "plus" : "search"} className="h-7 w-7" /></span><h3>{systemId === "others" && !data.roms.length ? "Your collection starts here." : "No games found"}</h3><p>{systemId === "others" && !data.roms.length ? "Use Upload NDS files above to add your first game." : "Try a different title or loosen your filters."}</p>{data.roms.length ? <button type="button" onClick={() => { resetFilters(); setQuery(""); }} className="toolbar-button mt-5">Reset search</button> : null}</div> : <div className="game-grid">{pageRoms.map((rom) => <RomCard key={`${rom.m}-${rom.n}`} meta={data.meta} rom={rom} onOpen={() => openRom(rom)} onDelete={data.meta.id === "others" ? () => setDeletingRom(rom) : undefined} />)}</div>}
+                {pageRoms.length === 0 ? <div className="empty-results"><span className="empty-results-icon"><Icon name={systemId === "others" && !data.roms.length ? "plus" : "search"} className="h-7 w-7" /></span><h3>{systemId === "others" && !data.roms.length ? "Your collection starts here." : "No games found"}</h3><p>{systemId === "others" && !data.roms.length ? "Use Upload NDS files above to add your first game." : "Try a different title or loosen your filters."}</p>{data.roms.length ? <button type="button" onClick={() => { resetFilters(); setQuery(""); }} className="toolbar-button mt-5">Reset search</button> : null}</div> : <div className="game-grid">{pageRoms.map((rom) => <RomCard key={`${rom.m}-${rom.n}`} meta={data.meta} rom={rom} onOpen={() => openRom(rom)} onDelete={data.meta.id === "others" && !rom.g?.includes("Apps") ? () => setDeletingRom(rom) : undefined} />)}</div>}
                 {totalPages > 1 ? <Pagination page={safePage} totalPages={totalPages} onPage={(next) => { setPage(next); document.getElementById("library")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} /> : null}
               </>}
             </section>
           </div>
           </>}
+          </>}
         </section>
       </div>
-      {selected && data && !detailSuppressed && !deletingRom ? <RomDetail meta={data.meta} rom={selected} siblings={siblings} onClose={() => openRom(null)} onSelect={(rom) => openRom(rom)} onDelete={data.meta.id === "others" ? () => setDeletingRom(selected) : undefined} /> : null}
+      {selected && data && !detailSuppressed && !deletingRom ? <RomDetail meta={data.meta} rom={selected} siblings={siblings} onClose={() => openRom(null)} onSelect={(rom) => openRom(rom)} onDelete={data.meta.id === "others" && !selected.g?.includes("Apps") ? () => setDeletingRom(selected) : undefined} /> : null}
       {deletingRom ? <DeleteUploadDialog rom={deletingRom} onClose={closeDeletion} onDeleted={deleted} /> : null}
+      <CollectionsPanel />
     </div>
   );
 }

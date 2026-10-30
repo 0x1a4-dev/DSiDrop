@@ -1,0 +1,1 @@
+Ta opcja umozliwia Ci ustawienie wygladu ikon w DSOrganize.  W pliku readme znajduje sie instrukcja sposobu tworzenia wlasnych zestawow ikon.  Zmiana tej opcji bedzie widoczna dopiero po ponownym uruchomieniu aplikacji.

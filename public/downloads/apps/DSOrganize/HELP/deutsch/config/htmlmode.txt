@@ -1,0 +1,1 @@
+Hier können sie den HTML-Anzeigemodus in DSOrganize einstellen. Falls sie "nur Text" auswählen, wird DSOrganize nur die Schrift auf der Seite anzeigen, und auch nur ein einer Größe. Falls sie "Erweitert" wählen, wird DSOrganize Überschriften und Texte in verschiedenen Größen und in Zukunft sogar Bilder anzeigen.

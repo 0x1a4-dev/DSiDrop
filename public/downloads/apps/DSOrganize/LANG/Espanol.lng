@@ -1,0 +1,256 @@
+; Archivo de traducción al español por jma790.
+; Version 2.6
+
+[Errors]
+NoVCard=No se encuentran archivos vCard...
+NoFAT=No estas usando una tarjeta compatible con la biblioteca FAT de Chishm. Por favor ejecuta este programa con GBAMP u otra tarjeta compatible.
+CreateDir=El directorio de "DSOrganize" no fue encontrado! Ha sido creado automaticamente con la configuracion por defecto.
+Resource=El directorio de recursos está incompleto. Algunas funciones como la base de datos Homebrew y la carga de homebrew probablemente no funcionen y algunos gráficos pueden estar perdidos!
+NoFiles=No hay archivos en este directorio...
+RenderError=Un error a ocurrido mientras se renderizaba el archivo.	
+Preview=La vista previa no esta activado por que la imagen es demasiado pequeña.
+NoToDo=No se ha encontrado ninguna tarea...
+NoScribble=No se ha encontrado ningún dibujo...
+NoId3=No contiene etiqueta ID3!
+NoDefaultBoot=No hay ningun cargador (booteador) propio para tu tarjeta. Por favor configura los cargadores en la pantalla de configuración.
+LaunchChishm=Intentando cargar el archivo con el cargador de chishm.
+NoDLDI=No has parcheado DSorganize con ningún archivo DLDI. El cargador de Chishm requiere que parchees DSorganize con DLDI o un archivo dldi en la carpeta resources.
+AutoPatch=Intentando parchear con DLDI.
+
+[Dates]
+Sunday=Domingo
+Monday=Lunes
+Tuesday=Martes
+Wednesday=Miercoles
+Thursday=Jueves
+Friday=Viernes
+Saturday=Sabado
+	
+January=Enero
+February=Febrero
+March=Marzo
+April=Abril
+May=Mayo
+June=Junio
+July=Julio
+August=Agosto
+September=Septiembre
+October=Octubre
+November=Noviembre
+December=Diciembre
+
+AM=AM
+PM=PM
+
+[Address]
+FirstName=Nombre
+LastName=Apellido
+Nickname=Apodo
+HomePhone=Casa
+WorkPhone=Trabajo
+CellPhone=Móvil
+Address=Dirección
+City=Ciudad
+State=Prov.
+Zip=Codigo postal
+EMail=E-Mail
+Comment=Comentarios
+
+[Navigation]
+Home=Inicio
+Welcome=Bienvenido
+Previous=Atras
+Next=Sig.
+Reminder=Recordatorio
+EditReminder=Editar Recordatorio
+ViewDay=Agenda
+DayView=Agenda
+Save=Guardar
+Back=Volver
+EditSelected=Modificar
+Calendar=Calendario
+Create=Crear
+PreviousField=Campo ant.
+NextField=Sig. campo
+Configuration=Configuración
+AddressBook=Libreta de Direcciones
+Language=Idioma
+StartScreen=Pantalla principal
+TimeFormat=Formato de Hora
+NameFormat=Formato de Nombre
+First=Nombre		
+Last=Apellido
+Unknown=Desconocido
+Browser=Explorador
+Open=Abrir
+Launch=Cargar
+PrevDay=Dia anterior
+NextDay=Dia siguiente
+Up=Subir
+NewFile=Nuevo Archivo
+Delete=Borrar
+Rename=Renombrar
+Copy=Copiar
+Paste=Pegar
+More=Mas
+Confirm=Confirmar
+Filename=Nombre de archivo
+Calculator=Calculadora
+Yes=Sí
+No=No
+ShowHidden=Mostrar Archivos Ocultos
+Memory=Memoria
+Edit=Editar
+PageUp=Re Pagina
+PageDown=Av Pagina
+Working=Trabajando
+ChoosePal=Elegir paleta de colores
+Reset=Reiniciar
+ToDo=Lista de tareas
+Title=Título
+ScribblePad=Pizarra
+SaveFormat=Formato de guardado de la Pizarra
+Pause=Pausa
+Play=Reproducir
+SoundMode=Modo de reproducción
+OneShot=Solo un archivo
+Sequential=Secuencial
+NextFile=Siquiente
+PrevFile=Anterior
+RandFile=Aleatorio
+Hold=Bloquear
+DataBase=Base de datos Homebrew
+View=Ver Archivo
+Hide=Alternar oculto
+Done=Hecho
+Cancel=Cancelar
+Date=Fecha	
+Version=Versión
+Size=Tamaño
+HTMLMode=Modo de renderizado de HTML
+SecondClick=Acción al doble clic
+DateFormat=Formato de Fecha
+TextOnly=Solo texto
+Extended=Extendido
+NameSort=Ord. por nombre
+DateSort=Ord. por fecha
+Swap=Cambiar
+Record=Grabar
+RecordMode=Modo de grabación
+Playback=Reproducción
+Length=Longitud
+Stop=Parar
+IRC=IRC
+Send=Enviar
+Disconnect=Desconectar
+Reconnect=Reconectar
+LaunchAlt=Cargar alternativo
+MKDir=Nueva carpeta
+Cut=Cortar
+DefaultHomebrew=Carpeta predeterminada del homebrew
+Proxy=Proxy HTTP
+Drag=Arrastra los iconos con el stylus para reordenar los iconos del menu principal.
+AutoConnect=Autoconectar al servidor IRC
+IRCNickname=Nick IRC
+IRCServer=Servidor IRC
+IRCAltNick=Nick alternativo para el IRC
+None=Ninguno
+SwapAB=Intercambiar los botones A/B
+SwapBoot=Método de carga predeterminado
+AutoBullet= Autobullets en la lista de tareas
+Volume=Volumen
+NewDir=Nueva Carpeta
+IconSet=Grupo de íconos
+SettingDescription=Descripción de la selección
+LoadPicture=Cargando imágen...
+Continue=Continuar
+Rendering=Dibujando...
+ToChange=para cambiar
+Game=Juego
+Go=Ir
+WebBrowser=Navegador Web
+Forward=Adelante
+
+[Regional]
+Numbers=1234567890-=
+Symbols=!@#$%^&*()_+
+Lowercase=qwertyuiopasdfghjklzxcvbnm,./;'[]
+Uppercase=QWERTYUIOPASDFGHJKLZXCVBNM<>?:"{}
+Special1=àáâãäåèéêëìíîïñòóôõöùúûüý ¡¿ðþ~æç
+Special2=ÀÁÂÃÄÅÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ ¡¿ÐÞßÆÇ
+
+[Browser]
+FileSize=Tamaño de archivo
+FileType=Tipo de archivo
+NDSFile=Archivo de Nintendo DS
+TXTFile=Archivo de texto
+VCFFile=Archivo vCard
+DPLFile=Archivo de Agenda
+REMFile=Archivo de Calendario
+PicFile=Imagen
+Directory=Carpeta
+Unknown=Formato Desconocido
+BINFile=Formato Raw Modo 5
+TodoFile=Archivo de lista de tareas
+SoundFile=Archivo de sonido
+PlayListFile=Archivo de lista de reproducción
+HBFile=Archivo personalizado de base de datos
+PKGFile=Archivo personalizado de paquetes
+PluginFile=Archivo de Plugin
+ExeFile=Ejecutable para DSorganize
+ShortcutFile=Atajo de DSorganize
+
+[Id3]
+Title=Título
+Artist=Artista
+Album=Disco
+Genre=Género
+Comment=Comentario
+Year=Año
+Track=Canción #
+
+[Streaming]
+Buffer=Buffer
+Status=Estado
+NotConnected=No connectado.
+Associating=Asociando...
+Connecting=Conectando al servidor...
+ErrorConnecting=Ha habido un error conectando!
+Streaming=Streaming!
+Buffering=Guardando en buffer...
+Playing=Reproduciendo
+
+[Database]
+ChangedDirectory=Cambiado al directorio
+AlreadyExists=Ya existe
+CreatedDirectory=Directorio creado
+StartedDownload=Iniciada descarga desde
+ConnectingHost=Conectando al servidor...
+Deleted=Borrado
+MOTD=MOTD
+Description=Descripción
+Retrieving=Descargando...
+ErrorRetrieving=No se puede descargar
+GettingPackage=Consiguiendo información del paquete
+FailedPackage=Fallo en la descarga del contenido del paquete.
+Connecting=Conectando...
+GetMOTD=Descargando MOTD...
+GetList=Descargando lista...
+Download=Descargar
+NoDBEntries=No hay entradas en la base de datos!
+Refresh=Actualizar
+Input=Esperando el ingreso
+
+[IRC]
+Disconnected=Desconectado del servidor.
+Connecting=Conectando a 
+HelpAvailable=Digite /help para comandos disponibles!
+Connected=Conectado a hotspot!
+FailedConnect=Fallo al conectarse.
+CancelledConnect=Conexión cancelada.
+CannotConnect=No se puede conectar al servidor!
+ServerClosed=El servidor cerró la conexion.
+On=on
+Limit=Límite
+Key=key
+ConversationWith=Conversación con

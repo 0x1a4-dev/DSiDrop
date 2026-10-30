@@ -23,12 +23,16 @@ export function checksumLabel(meta: DatasetMeta): string {
 }
 
 export function coverUrl(meta: DatasetMeta, rom: Rom): string | null {
+  if (rom.thumbnail) return `/api/library/thumbnail?id=${encodeURIComponent(rom.m)}`;
   if (!rom.c) return null;
   return `${meta.coverBase}${encodeURIComponent(`${rom.c}.png`)}`;
 }
 
 export function romCategory(rom: Rom): RomCategory {
   const tags = rom.g ?? [];
+  if (tags.includes("Multimedia")) return "Multimedia";
+  if (tags.includes("Apps")) return "Apps";
+  if (tags.includes("Uploaded")) return "Uploaded";
   if (tags.includes("Unl") || tags.includes("Aftermarket")) return "Unlicensed";
   if (tags.includes("Hack")) return "Hack";
   if (tags.includes("Translation")) return "Translation";
@@ -49,6 +53,9 @@ export function romCategory(rom: Rom): RomCategory {
 }
 
 export const CATEGORY_ORDER: RomCategory[] = [
+  "Apps",
+  "Multimedia",
+  "Uploaded",
   "Retail",
   "Demo",
   "Prototype",
@@ -64,6 +71,7 @@ export const CATEGORY_ORDER: RomCategory[] = [
 
 export function categoryLabel(category: string): string {
   const labels: Record<string, string> = {
+    Uploaded: "Your uploads",
     "NDSi Enhanced": "DSi enhanced",
   };
   return labels[category] ?? category;

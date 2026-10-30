@@ -1,0 +1,1 @@
+This setting allows you to specify a fallback DNS server for your DS.  If you have already set your router/gateway as the primary DNS, it should be fine to leave this blank.

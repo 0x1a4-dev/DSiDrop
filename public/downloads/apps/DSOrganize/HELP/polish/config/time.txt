@@ -1,0 +1,1 @@
+Ta opcja pozwala Ci wybrac czy czas pokazywany w DSOrganize ma byc pokazywany w formacie AM/PM czy jako 24-godzinny.

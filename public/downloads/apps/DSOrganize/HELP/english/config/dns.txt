@@ -1,0 +1,1 @@
+This setting allows you to toggle auto or manual DNS settings on your DS.  Please note that if DHCP is disabled, auto DNS will be too.

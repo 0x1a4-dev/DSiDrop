@@ -4,6 +4,7 @@
 #include "title_font.h"
 #include "brand_font.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static u16 *canvas[2];
@@ -29,6 +30,41 @@ enum { KEY_ROWS = 5, KEY_HEIGHT = 24, KEY_TILES = 32 * KEY_ROWS * KEY_HEIGHT / 8
 static u16 keyReleased[KEY_TILES], keyPressed[KEY_TILES];
 static u16 keyboardTiles[KEY_TILES * 16 * 2] __attribute__((aligned(32)));
 static int renderedState = -1;
+static u16 *previewBackup;
+static uint32_t previewModes[2];
+static uint16_t previewBgControl[2];
+
+bool uiThemePreview(const u16 *pixels) {
+    previewBackup = malloc(2 * 128 * 1024);
+    if (!previewBackup) return false;
+    uiPresent();
+    memcpy(previewBackup, BG_GFX, 128 * 1024);
+    memcpy(previewBackup + 65536, BG_GFX_SUB, 128 * 1024);
+    previewModes[0] = REG_DISPCNT; previewModes[1] = REG_DISPCNT_SUB;
+    previewBgControl[0] = REG_BG3CNT; previewBgControl[1] = REG_BG3CNT_SUB;
+    swiWaitForVBlank();
+    REG_DISPCNT = MODE_5_2D | DISPLAY_BG3_ACTIVE;
+    REG_DISPCNT_SUB = MODE_5_2D | DISPLAY_BG3_ACTIVE;
+    REG_BG3CNT = BG_BMP16_256x256 | BG_BMP_BASE(0);
+    REG_BG3CNT_SUB = BG_BMP16_256x256 | BG_BMP_BASE(0);
+    REG_BG3PA = REG_BG3PD = REG_BG3PA_SUB = REG_BG3PD_SUB = 256;
+    REG_BG3PB = REG_BG3PC = REG_BG3PB_SUB = REG_BG3PC_SUB = 0;
+    REG_BG3X = REG_BG3Y = REG_BG3X_SUB = REG_BG3Y_SUB = 0;
+    dmaCopy(pixels, BG_GFX, 256 * 192 * 2);
+    dmaCopy(pixels + 256 * 192, BG_GFX_SUB, 256 * 192 * 2);
+    return true;
+}
+
+void uiThemePreviewEnd(void) {
+    if (!previewBackup) return;
+    DC_FlushRange(previewBackup, 2 * 128 * 1024);
+    swiWaitForVBlank();
+    dmaCopy(previewBackup, BG_GFX, 128 * 1024);
+    dmaCopy(previewBackup + 65536, BG_GFX_SUB, 128 * 1024);
+    REG_BG3CNT = previewBgControl[0]; REG_BG3CNT_SUB = previewBgControl[1];
+    REG_DISPCNT = previewModes[0]; REG_DISPCNT_SUB = previewModes[1];
+    free(previewBackup); previewBackup = NULL;
+}
 
 static void tilePixel(u16 *base, int x, int y, unsigned color) {
     if ((unsigned)x >= 256 || (unsigned)y >= 192) return;

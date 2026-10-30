@@ -1,0 +1,1 @@
+This setting will change the language displayed in DSOrganize.  Please note that not all languages may be up to date as they are kept up by the user base.

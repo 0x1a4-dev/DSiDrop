@@ -1,0 +1,1 @@
+Ta opcja pozwala Ci wybrac sposob zapisu ktorego uzywa edytor prostych rysunkow (Scribble Pad).  Zalecamy uzywanie plikow png poniewaz zajmuja duzo mniej miejsca na Twojej karcie.

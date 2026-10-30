@@ -13,6 +13,8 @@ void uiPresent(void);
 void uiButton(int x, int y, int width, int height, unsigned color);
 bool uiTouchFeedback(int x, int y);
 void uiCover(const u16 *pixels);
+bool uiThemePreview(const u16 *pixels);
+void uiThemePreviewEnd(void);
 void uiTitle(const char *text, int x, int y, int width, unsigned maxLines);
 void uiChevron(int x, int y);
 void uiText(bool mainDisplay, const char *text, int x, int y, int width, unsigned maxLines);

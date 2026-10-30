@@ -1,0 +1,1 @@
+Diese Einstellung erlaubt ihnen die Icons in DSOrganize einzustellen.  In der ReadMe finden sie Anweisungen, wie sie ihr eigenes Iconset erstellen können.  Die Änderungen werden nach einem Neustart übernommen.

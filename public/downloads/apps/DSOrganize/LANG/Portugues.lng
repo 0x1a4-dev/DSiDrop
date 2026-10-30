@@ -1,0 +1,190 @@
+; Portuguese Language file fo DS Organizer by Dudu.exe
+; For Version 2.01
+
+
+[Errors]
+NoVCard=Nenhum arquivo vCard encontrado...
+NoFAT=Você não esta usando um flashcard compativel com o 'Chishm's FAT library'.  Por favor utilize um flashcard compativel como o supercard por exemplo!
+CreateDir=O diretorio 'DSOrganize' não foi encontrado!  Ele foi criado automaticamente com a confifiguração padrão.
+NoFiles=Este diretorio esta vazil.
+RenderError=Um erro ocorreu ao tentar executar este arquivo.	
+Preview=O modo Preview não esta disponível porque a imagem é muito pequena.
+NoToDo=Nenhuma entrada encontrada...
+NoScribble=Nenhum desenho encontrado...
+NoId3=ID3 v1.1 não encontrado
+
+[Dates]
+Sunday=Domingo
+Monday=Segunda
+Tuesday=Terça
+Wednesday=Quarta
+Thursday=Quinta
+Friday=Sexta
+Saturday=Sábado
+	
+January=Janeiro
+February=Fevereiro
+March=Março
+April=Abril
+May=Maio
+June=Junho
+July=Julho
+August=Agosto
+September=Setembro
+October=Outubro
+November=Novembro
+December=Dezembro
+
+AM=AM
+PM=PM
+
+[Address]
+FirstName=Primeiro Nome
+LastName=Ultimo nome
+Nickname=Apelido (Nick)
+HomePhone=Telefone
+CellPhone=Celular
+Address=Endereço
+City=Cidade
+State=Estado
+Zip=CEP
+EMail=E-Mail
+Comment=Comentários
+
+[Navigation]
+Home=Tela incial
+Welcome=Bem vindo
+Previous=Anterior
+Next=Próximo
+EditReminder=Editar Notificação
+ViewDay=Vizualisar o dia
+DayView=Planos do Dia
+Save=Salvar
+Back=Voltar
+EditSelected=Editar Selecionado
+Calendar=Calendário
+Create=Criar
+PreviousField=Campo Anterior
+NextField=Próximo Campo
+Configuration=Configurações
+AddressBook=Agenda
+Language=Idioma
+StartScreen=Tela inicial
+TimeFormat=Formato da Hora
+NameFormat=Formato do Nome
+First=Primeiro
+Last=Ultimo
+Unknown=Desconhecido
+Browser=Browser
+Open=Abrir
+Launch=Executar
+PrevDay=Dia Anterior
+NextDay=Próximo Dia
+Up=Cima
+NewFile=Novo arquivo
+Delete=Deletar
+Rename=Renomear
+Copy=Copiar
+Paste=Colar
+More=Mais
+Confirm=Confirmar
+Filename=Nome do Arquivo
+Calculator=Calculadora
+Yes=Sim
+No=Não
+ShowHidden=Mostrar arquivos ocultos
+Memory=Memoria
+Edit=Editar
+PageUp=Page Up
+PageDown=Page Down
+Working=Calculando
+ChoosePal=Escolha o arquivo de palheta
+Reset=Resetar
+ToDo=Lista a Fazer
+Title=Título
+ScribblePad=Bloco de Desenhos
+SaveFormat=Formato do Desenho
+Pause=Pause
+Play=Play
+SoundMode=Modo de Reprodução
+OneShot=Single File
+Sequential=Sequencial
+NextFile=Próximo Arquivo
+PrevFile=Aquivo Anterior
+RandFile=Aleatório
+Hold=Hold
+DataBase=Download de Homebrews
+View=Exibir arquivo
+Hide=Esconder/Mostrar
+Done=Pronto
+Cancel=Cancelar
+Date=Data
+Version=Versão
+Size=Tamanho
+HTMLMode=Modo de visualização de HTML
+SecondClick=Ação no segundo Toque
+DateFormat=Formato da Data
+TextOnly=Somente Texto
+Extended=Extendido
+
+[Regional]
+Numbers=1234567890-=
+Symbols=!@#$%^&*()_+
+Lowercase=qwertyuiopasdfghjklzxcvbnm,./;'[]
+Uppercase=QWERTYUIOPASDFGHJKLZXCVBNM<>?:"{}
+Special1=àáâãäåèéêëìíîïñòóôõöùúûüý   ðþ~æç
+Special2=ÀÁÂÃÄÅÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ   ÐÞßÆÇ
+
+[Browser]
+FileSize=Tamanho do arquivo
+FileType=Tipo do arquivo
+NDSFile=Nintendo DS
+TXTFile=Texto
+VCFFile=vCard 
+DPLFile=Arquivo de planejamento
+REMFile=Arquivo de aviso
+PicFile=Imagem
+Directory=Diretorio
+Unknown=formato desconhecido
+BINFile=Dados em Raw Mode 5
+TodoFile=Aquivo de lista a fazer
+SoundFile=Arquivo de Audio
+
+[Id3]
+Title=Título
+Artist=Artista
+Album=Disco
+Genre=Genero
+Comment=Comentários
+Year=Ano
+Track=Faixa
+
+[Streaming]
+Buffer=Buffer
+Status=Status
+NotConnected=Desconectado.
+Associating=Negociando...
+Connecting=Conectando ao stream...
+ErrorConnecting=Houve um erro ao conectar!
+Streaming=Streaming!
+Buffering=Buffering stream...
+
+[Database]
+ChangedDirectory=Mudando para o diretorio
+AlreadyExists=Ja existe!
+CreatedDirectory=Diretorio Criado
+StartedDownload=Inciando download de
+ConnectingHost=Conectado ao host...
+Deleted=Deletado
+MOTD=Mensagem do Dia
+Description=Descrição
+Retrieving=Recebendo...
+ErrorRetrieving=Não foi possivel receber.
+GettingPackage=Recebendo informações do pacote.
+FailedPackage=Falha ao baixar as informações do pacote.
+Connecting=Conectando...
+GetMOTD=Recebendo Mensagem do dia...
+GetList=Recebendo Lista...
+Download=Download
+NoDBEntries=Sem entradas na lista!
+Refresh=Atualiza Lista

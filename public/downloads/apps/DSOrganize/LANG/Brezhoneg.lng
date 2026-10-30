@@ -1,0 +1,85 @@
+; Breton translation file.  Version 1.7
+; Translated by Albert April 1st 2006
+
+[Errors]
+NoVCard=N'eus ket bet kavet restr vCard ebet...
+NoFAT=War a seblant, n'eo ket kompatibl ho kartenn gant levraoueg FAT Chishm. Ret eo deoc'h implij ur GBAMP pe ur gartenn gompatibl all.
+CreateDir=Ne oa ket eus renkell 'DSOrganize' war ho kartenn. Krouet eo bet gant kefluniadurioù dre ziouer.
+NoFiles=N'eus restr ebet er renkell-mañ...
+RenderError=Bet ez eus ur fazi o klask diskouez ar skeudenn-mañ!
+Preview=N' hallit ket rakwelet ar skeudenn; re vihan eo.
+
+[Dates]
+Sunday=Sul
+Monday=Lun
+Tuesday=Meurzh
+Wednesday=Merc'her
+Thursday=Yaou
+Friday=Gwener
+Saturday=Sadorn
+
+January=Genver
+February=C'hwevrer
+March=Meurzh
+April=Ebrel
+May=Mae
+June=Mezheven
+July=Gouere
+August=Eost
+September=Gwengolo
+October=Here
+November=Du
+December=Kerzu
+
+AM=mintin
+PM=goude kreisteiz
+
+[Address]
+FirstName=Anv
+LastName=Anv familh
+Nickname=Lesanv
+HomePhone=Pgz. (er gêr)
+CellPhone=Pgz. hezoug
+Address=Chomlec'h
+City=Kêr/iadenn
+State=Stad
+Zip=Kod Post
+EMail=E-bost
+Comment=Displeg
+
+[Navigation]
+Home=Pennbajenn
+Welcome=Degemer mat deoc'h
+Previous=Pajenn gent
+Next=Pajenn a heul
+EditReminder=Aozañ
+ViewDay=Diskouez
+DayView=Divizout
+Save=Enrollañ
+Back=War gil
+EditSelected=Aozañ diuzad
+Calendar=Deiziataer
+Create=Krouiñ
+PreviousField=Tachenn gent
+NextField=Tachenn a heul
+Configuration=Dibaboù
+AddressBook=Karned chomlec'hioù
+Language=Yezh
+StartScreen=Pajenn degemer
+TimeFormat=Furmad an eur
+NameFormat=Furmad an anv
+First=Anv
+Last=Anv familh
+Unknown=Dianavezet
+Browser=Merdeer
+Open=Digeriñ
+Launch=Lañs
+PrevDay=Devezh kent
+NextDay=Devezh a heul
+Up=Pignat
+NewFile=Restr nevez
+Delete=Diverkañ
+Copy=Eilañ
+Paste=Pegañ
+More=Dibaboù all
+Confirm=Kada

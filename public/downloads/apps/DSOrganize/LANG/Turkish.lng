@@ -1,0 +1,217 @@
+; Turkish language file by Emrah Omuris
+; Version 2.25
+
+[Errors]
+NoVCard=VCard dosyasi bulunamadi...
+NoFAT=Chrism'in FAT Kutuphanesi ile uyumlu bir kart kullanmiyorsunuz. Lutfen bu programi GBAMP ya da bir baska uyumlu kart ile kullaniniz!
+CreateDir='DSOrganize' klasoru bulanamad˝! Bu sizin tarafinizdan olusturuldu, varsayilan ayarlar ile birlikte.
+NoFiles=Bu klasorde dosya yok...
+RenderError=Dosya islenirken hata olustu.	
+Preview=Onizleme modu kullanilamiyor cunku resim dosyasi cok kucuk.
+NoToDo=Yapilacaklar listeniz bos...
+NoScribble=Karalama bulunamadi...
+NoId3=ID3 v1.1 bilgisi guncel degil!
+
+[Dates]
+Sunday=Pazar
+Monday=Pazartesi
+Tuesday=Sali
+Wednesday=Carsamba
+Thursday=Persembe
+Friday=Cuma
+Saturday=Cumartesi
+	
+January=Ocak
+February=Subat
+March=Mart
+April=Nisan
+May=Mayis
+June=Haziran
+July=Temmuz
+August=Agustos
+September=Eylul
+October=Ekim
+November=Kasim
+December=Aralik
+
+AM=AM
+PM=PM
+
+[Address]
+FirstName=Adiniz
+LastName=Soyadiniz
+Nickname=Nickiniz
+HomePhone=Ev Telefonu
+WorkPhone=Is Telefonu
+CellPhone=Cep Telefonu
+Address=Adres
+City=Sehir
+State=Ilce
+Zip=Posta Kodu
+EMail=E-Mail
+Comment=Yorumlar
+
+[Navigation]
+Home=Ana Ekran
+Welcome=Hosgeldiniz
+Previous=Onceki
+Next=Sonraki
+EditReminder=Hatirlaticiyi Duzenle
+ViewDay=Gunu Gor
+DayView=Gun Planlayicisi
+Save=Kaydet
+Back=Geri
+EditSelected=Secimi Duzenle
+Calendar=Takvim
+Create=Olustur
+PreviousField=Onceki Alan
+NextField=Sonraki Alan
+Configuration=Ayarlar
+AddressBook=Adres Defteri
+Language=Dil
+StartScreen=Giris Ekrani
+TimeFormat=Zaman Formati
+NameFormat=Isim Formati
+First=Ilk
+Last=Son
+Unknown=Bilinmeyen
+Browser=Tarayici
+Open=Ac
+Launch=Goster
+PrevDay=Onceki Gun
+NextDay=Sonraki Gun
+Up=Yukari
+NewFile=Yeni Dosya
+Delete=Sil
+Rename=Yeniden Adlandir
+Copy=Kopyala
+Paste=Yapistir
+More=Daha
+Confirm=Dogrula
+Filename=Dosya Adi
+Calculator=Hesaplayici
+Yes=Evet
+No=Hayir
+ShowHidden=Gizli Dosyalari Goster
+Memory=Hafiza
+Edit=Duzenle
+PageUp=Yukari
+PageDown=Asagi
+Working=Calisiyor
+ChoosePal=Palet Dosyasi Sec
+Reset=Resetle
+ToDo=Yapilacaklar Listesi
+Title=Baslik
+ScribblePad=Cizim Tahtasi
+SaveFormat=Cizim Kayit Formati
+Pause=Duraklat
+Play=Yurut
+SoundMode=Yurutme Modu
+OneShot=Tek Dosya
+Sequential=Sirali
+NextFile=Sonraki Dosya
+PrevFile=Onceki Dosya
+RandFile=Karisik
+Hold=Bekle
+DataBase=Homebrew Veritabani
+View=Goster
+Hide=Gizle
+Done=Tamam
+Cancel=Iptal
+Date=Tarih
+Version=Surum
+Size=Boyut
+HTMLMode=HTML Isleme Modu
+SecondClick=Ikinci Tiklamada Isle
+DateFormat=Tarih Formati
+TextOnly=Sadece Metin
+Extended=Gelismis
+NameSort=Ada Gore Sirala
+DateSort=Tarihe Gore Sirala
+Swap=Degistir
+Record=Kaydet
+RecordMode=Kayit Modu
+Playback=Yurut
+Length=Sure
+Stop=Durdur
+IRC=IRC
+Send=Gonder
+Disconnect=Baglantiyi Kes
+Reconnect=Yeniden Baglan
+LaunchAlt=Farkli Goster
+MKDir=Yeni Klasor
+Cut=Kes
+DefaultHomebrew=Varsayilan Homebrew Dizini
+Proxy=HTTP Proxy
+Drag=Simgeleri kaleminizle surukleyerek ana ekrani isteginize gore ayarlayin.
+AutoConnect=IRC Sunucusuna Otomatik Baglan
+IRCNickname=IRC Nickname
+IRCServer=IRC Sunucusu
+None=Hicbiri
+SwapAB=A/B Tuslarini Degistir
+SwapBoot=Varsayilan Boot Metodu
+AutoBullet=Yapilacaklarda Otomatik Isaretle
+
+[Regional]
+Numbers=1234567890-=
+Symbols=!@#$%^&*()_+
+Lowercase=qwertyuiopasdfghjklzxcvbnm,./;'[]
+Uppercase=QWERTYUIOPASDFGHJKLZXCVBNM<>?:"{}
+Special1=‡·‚„‰ÂËÈÍÎÏÌÓÔÒÚÛÙıˆ˘˙˚¸˝   ˛~ÊÁ
+Special2=¿¡¬√ƒ≈»… ÀÃÕŒœ—“”‘’÷Ÿ⁄€‹›   –ﬁﬂ∆«
+
+[Browser]
+FileSize=Dosya Boyutu
+FileType=Dosya Turu
+NDSFile=Nintendo DS Dosyasi
+TXTFile=Metin Dosyasi
+VCFFile=vCard Dosyasi
+DPLFile=Gun Planlayicisi Dosyasi
+REMFile=Hatirlatici Dosyasi
+PicFile=Resim
+Directory=Dizin
+Unknown=Bilinmeyen Bicim
+BINFile=Raw Mode 5 Data
+TodoFile=Yapilacaklar Dosyasi
+SoundFile=Ses Dosyasi
+HBFile=Ozel Veritabani Dosyasi
+PKGFile=Ozel Paket Dosyasi
+
+[Id3]
+Title=Baslik
+Artist=Artist
+Album=Album
+Genre=Tarz
+Comment=Yorum
+Year=Yil
+Track=Parca No
+
+[Streaming]
+Buffer=Buffer
+Status=Durum
+NotConnected=Bagli Degil
+Associating=Baglaniyor...
+Connecting=Akiskan Dosyaya Baglaniyor...
+ErrorConnecting=Baglanti Hatasi Olustu!
+Streaming=Yurutuluyor!
+Buffering=Yukleniyor...
+
+[Database]
+ChangedDirectory=Dizine degistir
+AlreadyExists=zaten var
+CreatedDirectory=Dizin olusturuldu
+StartedDownload=Indirmenin basladigi yer
+ConnectingHost=Sunucuya baglaniliyor...
+Deleted=Silindi
+MOTD=MOTD
+Description=Aciklama
+Retrieving=Aliniyor...
+ErrorRetrieving=Alinamiyor.
+GettingPackage=Paket bilgisi aliniyor.
+FailedPackage=Paket icerigi yuklemede hata.
+Connecting=Baglaniyor...
+GetMOTD=MOTD Aliniyor...
+GetList=Liste Aliniyor...
+Download=Indir
+NoDBEntries=Veritabani girdisi bulunamadi!
+Refresh=Listeyi Yenile

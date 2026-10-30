@@ -1,0 +1,1 @@
+This setting allows you to specify the DNS server your DS will use.  If you are using fixed IP, this should be the same IP as your gateway (normally the router IP).

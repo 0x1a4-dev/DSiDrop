@@ -1,0 +1,262 @@
+; You can use INI style comments here.
+; Version 2.2
+
+[Errors]
+NoVCard=Inga vCard filer kan hittas...
+NoFAT=Du använder ett minneskort som inte är kompatabelt med Chishm's FAT library.  Kör detta program med GBAMP eller annat kompatabelt minnerkort!
+CreateDir=Mappen "DSOrganize" hittades inte!  Den har nu skapats, med nollställda inställningar.
+Resource=Resource-mappen är inkomplett. Vissa funktioner som Homebrew-databasen och körning av program, och en del bilder, kan saknas.
+NoFiles=Inga filer i den här mappen...
+RenderError=Ett fel upstod när filen renderades.
+Preview=Kan inte förhandsvisa bilden för att den är för liten.
+NoToDo=Inga Att-göra funna...
+NoScribble=Inget klottrande funnet...
+NoId3=Någon ID3 v1.1 data finns inte!
+NoDefaultBoot=Det finns ingen inbyggd bootladdare för ditt kort. Välj bootladdare i inställningarna.
+LauchChishm=Försöker starta filen med Chishms laddare.
+NoDLDI=Du har inte patchat DSOrganize med någon DLDI-fil. Chishm-laddaren kräver att du gjort det eller har DLDI-filen i resource-mappen.
+AutoPatch=Försöker patcha med DLDI.
+OutOfMemory=Kritiskt fel!  DSOrganize har fått slut på minne.
+
+[Dates]
+Sunday=Söndag
+Monday=Måndag
+Tuesday=Tisdag
+Wednesday=Onsdag
+Thursday=Torsdag
+Friday=Fredag
+Saturday=Lördag
+	
+January=Januari
+February=Februari
+March=Mars
+April=April
+May=Maj
+June=Juni
+July=Juli
+August=Augusti
+September=September
+October=Oktober
+November=November
+December=December
+
+AM=AM
+PM=PM
+
+[Address]
+FirstName=Förnamn
+LastName=Efternamn
+Nickname=Smeknamn
+HomePhone=Hemtelefon
+WorkPhone=Arbetstelefon
+CellPhone=Mobiltelefon
+Address=Adress
+City=Ort
+State=Stat
+Zip=Postnummer
+EMail=E-Post
+Comment=Kommentar
+
+[Navigation]
+Home=Hemskärm
+Welcome=Välkommen
+Previous=Tidigare
+Next=Nästa
+Reminder=Påminnelse
+EditReminder=Ändra påminnelse
+ViewDay=Titta på dag
+DayView=Dagplanerare
+Save=Spara
+Back=Bakåt
+EditSelected=Ändra markerade
+Calendar=Kalender
+Create=Skapa
+PreviousField=Tidigare fält
+NextField=Nästa fält
+Configuration=Inställningar
+AddressBook=AdressBok
+Language=Språk
+StartScreen=Startskärm
+TimeFormat=TidsFormat
+NameFormat=Namnformat
+First=Första
+Last=Sista
+Unknown=Okänd
+Browser=Bläddrare
+Open=Öppna
+Launch=Kör
+PrevDay=Tidigare dag
+NextDay=Nästa dag
+Up=Upp
+NewFile=Ny fil
+Delete=Ta bort
+Rename=Döp om
+Copy=Kopiera
+Paste=Klistra in
+More=Mer
+Confirm=Bekräfta
+Filename=Filnamn
+Calculator=Kalkylator
+Yes=Ja
+No=Nej
+ShowHidden=Visa dolda filer
+Memory=Minne
+Edit=Ändra
+PageUp=Sida upp
+PageDown=Sida ned
+Working=Arbetar
+ChoosePal=Välj palettfil
+Reset=Reset
+ToDo=Att-göra-lista
+Title=Titel
+ScribblePad=Klotterplank
+SaveFormat=Sparformat för klotter
+Pause=Paus
+Play=Spela upp
+SoundMode=Uppspelningssätt
+OneShot=En fil
+Sequential=I ordning
+NextFile=Nästa fil
+PrevFile=Tidigare fil
+RandFile=Slumpmässigt
+Hold=Lås
+DataBase=Homebrew Databas
+View=Visa
+Hide=Göm/Visa
+Done=Klar
+Cancel=Avbryt
+Date=Datum
+Version=Version
+Size=Storlek
+HTMLMode=HTML Renderingsläge
+SecondClick=Öppna på andra klicket
+DateFormat=Datumformat
+TextOnly=Bara text
+Extended=Utökad
+NameSort=Alfabetiskt
+DateSort=Efter datum
+Swap=Växla
+Record=Spela in
+RecordMode=Inspelningsläge
+Playback=Spela upp
+Length=Längd
+Stop=Stopp
+IRC=IRC
+Send=Skicka
+Disconnect=Nedkoppla
+Reconnect=Återuppkoppla
+LaunchAlt=Alternativ start
+MKDir=Ny katalog
+Cut=Klipp ut
+DefaultHomebrew=Standardkatalog för Homebrew
+Proxy=HTTP-proxy
+Drag=Dra ikonerna med pennan för att ordna dem i hemskärmen.
+AutoConnect=Koppla till IRC-server automatiskt
+IRCNickname=IRC-smeknamn
+IRCServer=IRC-server
+IRCAltNick=Alternativt IRC-smeknamn
+None=Ingen
+SwapAB=Kasta om A/B-knapparna
+NormalBoot=Normal startmetod
+AltBoot=Alternativ startmetod
+AutoBullet=Automatiska bomber i Att-göra
+Volume=Volym
+NewDir=Ny katalog
+IconSet=Ikonuppsättning
+SettingDescription=Ställer beskrivning
+LoadPicture=Laddar bild...
+Continue=Fortsätt
+Rendering=Renderar...
+ToChange=att ändra
+Game=Spel
+Go=Gå
+WebBrowser=Webläsare
+Forward=Framåt
+Homepage=Hemsida
+Query=Dialog
+Append=Lägg till
+
+
+[Regional]
+Numbers=1234567890-=
+Symbols=!@#$%^&*()_+
+Lowercase=qwertyuiopasdfghjklzxcvbnm,./;'[]
+Uppercase=QWERTYUIOPASDFGHJKLZXCVBNM<>?:~{}
+Special1=àáâãäåèéêëìíîïñòóôõöùúûüý   ðþ æç
+Special2=ÀÁÂÃÄÅÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ   ÐÞßÆÇ
+
+[Browser]
+FileSize=Filstorlek
+FileType=Filtyp
+NDSFile=Nintendo DS-fil
+TXTFile=Textfil
+VCFFile=vCardfil
+DPLFile=Dagplanerarfil
+REMFile=Påminnelsefil
+PicFile=Bildfil
+Directory=Katalog
+Unknown=Okänt filformat
+BINFile=Rått Mode 5-data
+TodoFile=Att-göra fil
+SoundFile=Ljudfil
+PlayListFile=Musiklista
+HBFile=Speciell databasfil
+PKGFile=Speciell paketfil
+PluginFile=Insticksmodul
+ExeFile=DSOrganize Körbar
+ShortcutFile=DSOrganize genväg
+
+[Id3]
+Title=Titel
+Artist=Artist
+Album=Album
+Genre=Genre
+Comment=Kommentar
+Year=År
+Track=Spår
+
+[Streaming]
+Buffer=Buffer
+Status=Status
+NotConnected=Frånkopplad.
+Associating=Associerar...
+Connecting=Kopplar till ström...
+ErrorConnecting=Ett fel uppstod vid koppling!
+Streaming=Strömmar!
+Buffering=Buffrar ström...
+Playing=Spelar
+
+[Database]
+ChangedDirectory=Bytte till katalog
+AlreadyExists=finns redan
+CreatedDirectory=Skapade katalog
+StartedDownload=Påbörjade nedtankning från
+onnectingHost=Kopplar till värd...
+Deleted=Borttagen
+MOTD=Dagens meddelande
+Description=Beskrivning
+Retrieving=Hämtar...
+ErrorRetrieving=Hämtning misslyckades.
+GettingPackage=Hämtar paketinformation.
+FailedPackage=Kunde inte ladda ned paketinnehåll.
+Connecting=Kopplar...
+GetMOTD=Hämtar dagens meddelande...
+GetList=Hämtar lista...
+Download=Ladda ned
+NoDBEntries=Inga rader i databas!
+Refresh=Ladda om lista
+Input=Väntar på inmatning
+
+[IRC]
+Disconnected=Frånkopplad från server.
+Connecting=Kopplar till
+HelpAvailable=Skriv /help för tillgängliga kommandon!
+Connected=Kopplad till accesspunkt!
+FailedConnect=Misslyckades med koppling.
+CancelledConnect=Avbröt koppling.
+CannotConnect=Kunde inte koppla till server!
+ServerClosed=Server stängde kopplingen.
+On=på
+Limit=Begränsning
+Key=Nyckel
+ConversationWith=Konversation med

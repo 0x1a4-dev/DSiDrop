@@ -1,0 +1,1 @@
+Hier können sie einstellen, welches Datumsformat DSOrganize verwenden soll. Dies wirkt sich auf Termine und die Homebrewdatenbank aus.

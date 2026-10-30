@@ -1,0 +1,1 @@
+This setting allows you to set the subnet mask of the IP you have provided.  Under virtually all home environments, the subnet mask is 255.255.255.0.

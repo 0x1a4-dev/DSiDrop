@@ -1,0 +1,1 @@
+Hier können sie einstellen ob der Dateimanager versteckte Dateien anzeigen soll. Wenn versteckte Dateien angezeigt werden, kann DSOrganize Dateien verstecken und wieder sichtbar machen.

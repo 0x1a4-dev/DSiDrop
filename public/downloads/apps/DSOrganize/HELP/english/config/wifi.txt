@@ -1,0 +1,1 @@
+This setting allows you to configure your wifi for connecting to irc, homebrew database, streams and the web browser.  The firmware settings are saved directly into the three wifi profiles in the firmware.

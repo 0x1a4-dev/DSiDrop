@@ -1,0 +1,1 @@
+This page will list all of the SSIDs that are visible to your DS.  Just because it is listed here does not mean it will work out of the box with DSOrganize.  You may still need to enter the WEP key or set up fixed IP.

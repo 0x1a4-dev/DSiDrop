@@ -3,7 +3,7 @@
 import type { DeviceQueueInput, DeviceSnapshot } from "./device-types";
 import type { QueueItem } from "./queue-client";
 
-export type DeviceSelection = { items: DeviceQueueInput[]; label: string };
+export type DeviceSelection = { items: DeviceQueueInput[]; label: string; multimedia?: boolean; folder?: boolean };
 const OPEN_EVENT = "dsidrop-devices-open";
 const CHANGE_EVENT = "dsidrop-devices-changed";
 

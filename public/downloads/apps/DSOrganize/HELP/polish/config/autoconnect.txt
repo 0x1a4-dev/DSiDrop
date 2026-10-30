@@ -1,0 +1,1 @@
+Kiedy wlaczona, opcja pozwala DSOrganize IRC laczyc sie z preferowanym serverem IRC automatycznie po polaczeniu do Twojego AP.

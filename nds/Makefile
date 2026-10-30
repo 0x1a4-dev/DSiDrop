@@ -41,7 +41,7 @@ export LD := $(CC)
 export OFILES := $(CFILES:.c=.o)
 export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) $(foreach dir,$(LIBDIRS),-I$(dir)/include) -I$(CURDIR)/$(BUILD)
 export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
-.PHONY: all $(BUILD) clean test-http
+.PHONY: all $(BUILD) clean test-http test-update
 all: $(BUILD)
 $(BUILD): $(DSWIFI_LIB)
 	@[ -d $@ ] || mkdir -p $@
@@ -54,6 +54,10 @@ test-http:
 	@mkdir -p build/tests
 	$(HOST_CC) -std=gnu11 -Wall -Wextra -Werror -Itests/mocks -Iinclude tests/http_test.c -o build/tests/http_test
 	./build/tests/http_test
+test-update:
+	@mkdir -p build/tests
+	$(HOST_CC) -std=gnu11 -Wall -Wextra -Werror -Iinclude tests/update_test.c -o build/tests/update_test
+	./build/tests/update_test
 clean:
 	rm -rf -- $(BUILD) build/tests build/dswifi $(TARGET).elf $(TARGET).nds
 else

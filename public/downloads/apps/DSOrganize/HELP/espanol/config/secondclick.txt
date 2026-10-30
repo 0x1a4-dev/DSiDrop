@@ -1,0 +1,1 @@
+Si este modo está activado, tocando por 2a vez en un objeto seleccionado en la mayoría de las pantallas realizará la misma acción que pulsando el botón A.  Es un estilo parecido al de hacer doble click, aunque la pausa entre el primer y segundo click puede ser de cualquier duración.

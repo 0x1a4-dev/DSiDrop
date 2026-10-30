@@ -1,0 +1,1 @@
+Ta opcja pozwala Ci zmienic sposob wyswietlania HTML.  Jezeli wybierzesz Tylko tekst, DSOrganize wyswietli tylko czesc tekstowa z jedna wielkoscia czcionki.  Jezeli wybierzesz tyb rozszerzony, DSOrganize bedzie probowal odczytac znaczniki naglowkow, wielkosc fontow a w przyszlosci odczytac rowniez obrazki.

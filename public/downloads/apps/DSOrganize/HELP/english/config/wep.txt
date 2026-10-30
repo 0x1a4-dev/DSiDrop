@@ -1,0 +1,1 @@
+This setting allows you to specify the WEP key of your router.  DSOrganize recognizes 5, 13 and 16 byte WEP keys entered in either ascii or hex, so just type the key how it's displayed on your router page.  If you don't have a WEP key, just leave this setting blank.

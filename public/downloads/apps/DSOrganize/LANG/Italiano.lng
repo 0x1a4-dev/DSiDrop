@@ -1,0 +1,261 @@
+; Sample language file by Shaun taylor
+; Version 2.7 Final by Lotti
+
+[Errors]
+NoVCard=Rubrica Vuota.
+NoFAT=Stai utilizzando una card non compatibile con la FAT di Chishm. Per favore utilizza una GBAMP o un'altra card compatibile!
+CreateDir=Cartella 'DSOrganize' mancante! L'ho appena creata con le impostazioni di default.
+Resource=La cartella Resource Ë incompleta. Certe funzioni, come l'avvio di homebrews potrebbe non funzionare e alcune parti della grafica potrebbero essere assenti!
+NoFiles=Cartella Vuota
+RenderError=Si Ë verificato un errore durante l'elaborazione del file.	
+Preview=L'anteprima non Ë disponibile perchË l'immagine Ë troppo piccola.
+NoToDo=Nessuna voce.
+NoScribble=Nessun disegno.
+NoId3=Tag ID3 v1.1 non presente!
+NoDefaultBoot=Non riesco a trovare un valido bootloader per la tua flashcard. Configura il bootloader nella schermata di configurazione.
+LaunchChishm=Sto tentando di caricare il file con il loader di Chishm.
+NoDLDI=Non hai patchato questa rom con nessun file DLDI. Il loader di Chishm necessita di un file gi‡ patchato con DLDI o di un driver DLDI nella cartella Resource.
+AutoPatch=Sto cercando di patchare il file con le DLDI.
+OutOfMemory=Errore Fatale! DSOrganize ha esaurito la memoria.
+
+[Dates]
+Sunday=Domenica
+Monday=LunedÏ
+Tuesday=MartedÏ
+Wednesday=MercoledÏ
+Thursday=GiovedÏ
+Friday=VenerdÏ
+Saturday=Sabato
+	
+January=Gennaio
+February=Febbraio
+March=Marzo
+April=Aprile
+May=Maggio
+June=Giugno
+July=Luglio
+August=Agosto
+September=Settembre
+October=Ottobre
+November=Novembre
+December=Dicembre
+
+AM=AM
+PM=PM
+
+[Address]
+FirstName=Nome
+LastName=Cognome
+Nickname=Soprannome
+HomePhone=Tel Abitazione
+WorkPhone=Tel Lavoro
+CellPhone=Tel Cellulare
+Address=Indirizzo
+City=Citta'
+State=Prov
+Zip=C.A.P.
+EMail=E-Mail
+Comment=Commenti
+
+[Navigation]
+Home=Home
+Welcome=Benvenuto
+Previous=<<
+Next=>>
+Reminder=Reminder
+EditReminder=Appuntamento
+ViewDay=Giorno
+DayView=Agenda
+Save=Salva
+Back=Annulla
+EditSelected=Mod Selezione
+Calendar=Calendario
+Create=Crea
+PreviousField=<< Campo
+NextField=Campo >>
+Configuration=Configurazione
+AddressBook=Rubrica
+Language=Lingua
+StartScreen=Schermata Iniziale
+TimeFormat=Formato Ora
+NameFormat=Formato Nome
+First=Nome
+Last=Cognome
+Unknown=Sconosciuto
+Browser=Browser
+Open=Apri
+Launch=Avvia
+PrevDay=<< Giorno
+NextDay=Giorno >>
+Up=Cartella Sup
+NewFile=Nuovo File
+Delete=Cancella
+Rename=Rinomina
+Copy=Copia
+Paste=Incolla
+More=Opzioni
+Confirm=Conferma
+Filename=Nome File
+Calculator=Calcolatrice
+Yes=Si
+No=No
+ShowHidden=Mostra File Nascosti
+Memory=Memoria
+Edit=Modifica
+PageUp=Pag Su
+PageDown=Pag Gi˘
+Working=Elaboro..
+ChoosePal=Scegli File Tavolozza
+Reset=Reset
+ToDo=Todo List
+Title=Titolo
+ScribblePad=Paint
+SaveFormat=Formato Immagine Paint
+Pause=Pausa
+Play=Play
+SoundMode=Mod Esecuzione
+OneShot=Singolo
+Sequential=Sequenza
+NextFile=File >>
+PrevFile=<< File
+RandFile=Casuale
+Hold=Blocca
+DataBase=Homebrew Database
+View=Visualizza File
+Hide=Mostra Nascosti
+Done=Fatto
+Cancel=Cancella
+Date=Data
+Version=Versione
+Size=Dimensione
+HTMLMode=HTML Rendering Mode
+SecondClick=Doppio Click
+DateFormat=Formato Data
+TextOnly=Solo Testo
+Extended=Esteso
+NameSort=Ordina per nome
+DateSort=Ordina per data
+Swap=Scambia
+Record=Registra
+RecordMode=Mod Registrazione
+Playback=Esecuzione
+Length=Durata
+Stop=Stop
+IRC=IRC
+Send=Invia
+Disconnect=Disconnetti
+Reconnect=Riconnetti
+LaunchAlt=Avvio alternato
+MKDir=Nuova Dir
+Cut=Taglia
+DefaultHomebrew=Cartella Homebrews Default
+Proxy=HTTP Proxy
+Drag=Sposta le icone con lo stilo per sistemarle come desideri.
+AutoConnect=Autoconnessione al server IRC.
+IRCNickname=IRC Nickname
+IRCServer=IRC Server
+IRCAltNick=IRC Nickname Alternativo
+None=Nessuno
+SwapAB=Scambia i pulsanti A/B
+NormalBoot=Boot di Default
+AltBoot=Boot Alternativo
+AutoBullet=Elenco puntato automatico in Todo List
+Volume=Volume
+NewDir=Nuova Cartella
+IconSet=Icon Set
+SettingDescription=Descrizione Opzione
+LoadPicture=Caricando l'immagine...
+Continue=Continua
+Rendering=Rendering...
+ToChange=da cambiare
+Game=Gioco
+Go=Vai
+WebBrowser=Web Browser
+Forward=Avanti
+Homepage=Home Page
+Query=Query
+Append=Append
+
+[Regional]
+Numbers=1234567890-=
+Symbols=!@#$%^&*()_+
+Lowercase=qwertyuiopasdfghjklzxcvbnm,./;'[]
+Uppercase=QWERTYUIOPASDFGHJKLZXCVBNM<>?:"{}
+Special1=‡·‚„‰ÂËÈÍÎÏÌÓÔÒÚÛÙıˆ˘˙˚¸˝   ˛~ÊÁ
+Special2=¿¡¬√ƒ≈»… ÀÃÕŒœ—“”‘’÷Ÿ⁄€‹›   –ﬁﬂ∆«
+
+[Browser]
+FileSize=Dimensione
+FileType=Formato
+NDSFile=File Nintendo DS
+TXTFile=File Testo
+VCFFile=File vCard
+DPLFile=File Agenda
+REMFile=File Appuntamento
+PicFile=Immagine
+Directory=Cartella
+Unknown=Formato Sconosciuto
+BINFile=Raw Mode 5 Data
+TodoFile=Todo File
+SoundFile=File Audio
+PlayListFile=Playlist
+HBFile=Database File Personalizzato
+PKGFile=Pacchetto File Personalizzato
+PluginFile=Plugin
+ExeFile=Eseguibile DSOrganize
+ShortcutFile=Collegamento DSOrganize
+
+[Id3]
+Title=Titolo
+Artist=Artista
+Album=Album
+Genre=Genere
+Comment=Commenti
+Year=Anno
+Track=Traccia N^
+
+[Streaming]
+Buffer=Buffer
+Status=Stato
+NotConnected=Non connesso.
+Associating=Associating...
+Connecting=Connecting to stream...
+ErrorConnecting=Errore durante la connessione!
+Streaming=Streaming!
+Buffering=Buffering stream...
+Playing=Playing
+
+[Database]
+ChangedDirectory=Changed to directory
+AlreadyExists=gi‡ esiste!
+CreatedDirectory=Cartella creata
+StartedDownload=Download iniziato da
+ConnectingHost=Connessione all'host...
+Deleted=Cancellato
+MOTD=Messaggio di Benvenuto
+Description=Descrizione
+Retrieving=In ricerca...
+ErrorRetrieving=Impossibile da reperire.
+GettingPackage=Scarico i contenuti del pacchetto.
+FailedPackage=Impossibile scaricare i contenuti del pacchetto.
+Connecting=Connessione in corso...
+GetMOTD=Scarico Messaggio di Benvenuto...
+GetList=Scarico la lista...
+Download=Download
+NoDBEntries=Nessuna voce nel database!
+Refresh=Aggiorna
+Input=Sto aspettando un input
+
+[IRC]
+Disconnected=Disconnesso dal server.
+Connecting=Connessione con
+HelpAvailable=Digitare /help per conoscere i comandi disponibili!
+Connected=Connesso all'hotspot!
+FailedConnect=Impossibile connettersi.
+CancelledConnect=Connessione cancellata.
+CannotConnect=Impossibile trovare il server!
+ServerClosed=Il server ha chiuso la connessione.
+On=On
+Limit=Limite
+Key=Chiave
+ConversationWith=Conversazione con

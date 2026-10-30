@@ -1,0 +1,1 @@
+Hier können sie den Homebrewlauncher auswählen, der standardmäßig beim Laden von NDS Dateien benutzt werden soll. Den anderen Launcher können sie per Druck auf die Y-Taste benutzen.

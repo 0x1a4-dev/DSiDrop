@@ -1,0 +1,1 @@
+This setting allows you to assign a fixed IP to your DS.  This should only be used if DHCP doesn't work with your particular router.  Make sure that this is unique.

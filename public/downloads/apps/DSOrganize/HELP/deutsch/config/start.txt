@@ -1,0 +1,1 @@
+Hier können sie einstellen, welches Fenster beim Starten von DSOrganize geöffnet werden soll. Die Homebrew-Datenbank kann natürlich nicht gewählt werden.

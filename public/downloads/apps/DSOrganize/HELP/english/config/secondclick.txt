@@ -1,0 +1,1 @@
+If this mode is enabled, tapping again on a selected item in most screens will perform the same action as the A button.  This is similar in style to double clicking, though the pause inbetween the first and second click can be any duration.

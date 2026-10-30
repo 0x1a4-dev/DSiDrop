@@ -1,0 +1,1 @@
+When enabled, this option will automatically insert a bullet on the next line in the Todo screen after pressing enter.

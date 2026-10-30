@@ -1,0 +1,1 @@
+Wenn sie diese Option aktivieren, wird sich DSOrganize automatisch mit dem gewählten IRC Server verbinden, sobald es mit einem Access Point verbunden ist.

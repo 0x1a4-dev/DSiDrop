@@ -1,0 +1,1 @@
+Ta opcja wybiera loader homebrew ktory bedzie uzywany domyslnie przy uruchamianiu plikow NDS z przegladarki plikow.  Inny loader jest dostepny pod przyciskiem Y.

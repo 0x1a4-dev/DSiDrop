@@ -1,0 +1,1 @@
+This setting is placed in for those who would rather have the B button as the main action button.  When enabled, this setting will swap any instances of A and B inside DSOrganize.

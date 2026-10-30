@@ -1,0 +1,1 @@
+Wenn sie diesen Modus aktivieren, bewirkt ein zweiter Klick auf ein Objekt das gleiche wie der A Knopf. Dies ist ähnlich wie ein Doppelklick, jedoch ist es egal wie lang die Pause zwischen dem ersten und zweiten Klick ist.

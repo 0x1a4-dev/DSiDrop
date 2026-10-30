@@ -1,0 +1,164 @@
+; This file allows you to customize the color scheme used in DSOrganize.  Most values should be apparent.  When a control
+; doesn't have a property, it is usually covered by the Widget properties which are generic to all GUI elements that don't
+; have specific customizations.
+
+; All values except for the noted IRC colors should be in hex.
+
+; Items on the screen, but not in an element
+[Generic]
+Highlight=6776
+Fill=FFFF
+Text=0000
+Progress=739C
+
+; Generic items, like buttons, borders, etc
+[Widget]
+Border=0000
+Fill=FFFF
+Text=0000
+Highlight=7E00
+
+; Scrollbar
+[Scroll]
+Fill=FFFF
+Highlight=7E00
+Normal=0000
+
+; Lists
+[List]
+Border=7BDE
+Fill=7BDE
+Text=0000
+
+; Any small or bordered text/setting entry boxes
+[TextBox]
+Text=294A
+Fill=FFFF
+Highlight=7E00
+Progress=739C
+
+; Any larger text areas
+[TextArea]
+Fill=FFFF
+Text=0000
+
+; Colors controlling mostly the shading of specific days
+[Calendar]
+Weekend=7E00
+Normal=0000
+DayPlanner=4010
+CurrentDate=001F
+Reminder=221F
+DayUnderline=2529
+
+; Color of the separating dots
+[DayPlanner]
+Dots=0000
+
+; Color of the border arrows
+[Configuration]
+Arrows=0000
+
+; Color of different keyboard elements
+[Keyboard]
+Text=0000
+MEDS=294A
+Highlight=7E00
+SpecialHighlight=001F
+Border=0000
+Fill=FFFF
+Special=5EF7
+ABCSwap=6FBA
+
+; Select box on picture viewer
+[Picture]
+Select=001F
+
+; Color of hidden elements on the list
+[Browser]
+Hidden=3DEF
+
+; Cursor customizations
+[Cursor]
+Insert=0000
+Overwrite=001F
+
+; For the date box above the home screen, and day planner screen
+[Date]
+Text=0000
+Fill=6739
+Border=0000
+BorderFill=34C0
+
+; For the syntax highlighting
+[Editor]
+Comment=5A08
+Property=0000
+Section=4010
+Setting=7C00
+
+; For the highlight box around the home icons
+[Home]
+Highlight=0200
+
+; Bookmark marker colors
+[Viewer]
+Bookmark=001F
+
+; For the rendering/loading progress bar
+[ProgressBar]
+Border=0000
+Fill=FFFF
+Bar=7E00
+
+; Any sound screen, including customizations for the recorder
+[Sound]
+SeekFill=FFFF
+SeekNormal=7E00
+SeekDisabled=5294
+MetaText=294A
+Hold=5294
+EQMedian=001F
+EQData=8200
+Arrows=0000
+
+; Mostly to control button texts
+[Calculator]
+ScreenFill=FFFF
+ScreenText=0000
+ScreenBorder=0000
+ScreenFadeText=5294
+ButtonText=0000
+ButtonBorder=0000
+ButtonHighlight=7E00
+FillNormal=FFFF
+FillMemory=5F7F
+FillSpecial=739C
+FillUnary=6BBB
+FillBinary=7F39
+
+; Complete IRC color customization
+[IRC]
+TabFill=FFFF
+TabBorder=0000
+TabText=0000
+TabHighlight=7E00
+TabMore=77BD
+TabImportant=001F
+TabUnimportant=7C00
+ScreenFill=FFFF
+ScreenBorder=000
+ScreenText=0000
+
+; These colors are a little different.  They are the same as your classic 16color MS-DOS colors, or the colors found in mIRC or other IRC programs.
+; These should be in decimal, not hex.
+Notice=7
+Action=13
+CTCP=4
+Normal=0
+Server=12
+Internal=10
+Nick=3
+Topic=3
+Mode=12
+Highlight=9

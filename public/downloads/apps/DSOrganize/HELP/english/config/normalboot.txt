@@ -1,0 +1,1 @@
+This setting selects the homebrew loader that will be used by default when launching NDS files from the browser.  Please note that only SuperCard and GBAMP have an internal loader.

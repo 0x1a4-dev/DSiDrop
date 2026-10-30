@@ -1,0 +1,1 @@
+Diese Option bewirkt wie die Namen im Adressbuch angezeigt und sortiert werden.

@@ -1,6 +1,10 @@
 import sharp from "sharp";
+import { readFile, stat } from "node:fs/promises";
+import path from "node:path";
 import { coverUrl } from "../roms";
 import { DsiError, dsiSystem, dsiText, lookup, validateId } from "./dsi";
+import { findTheme } from "./themes";
+import { mediaThumbnail } from "./media-thumbnail";
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const CACHE_LIMIT = 128;
@@ -10,24 +14,39 @@ const cache = (shared.__dsiCovers ??= new Map<string, Entry>());
 
 async function fetchCover(url: string, size: number): Promise<Buffer | null> {
   try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(4000), cache: "no-store" });
-    if (!response.ok || !response.body || Number(response.headers.get("Content-Length")) > MAX_IMAGE_BYTES) {
-      await response.body?.cancel();
-      return null;
-    }
-    const reader = response.body.getReader();
-    const chunks: Uint8Array[] = [];
-    let length = 0;
-    try {
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        length += value.length;
-        if (length > MAX_IMAGE_BYTES) { await reader.cancel(); return null; }
-        chunks.push(value);
+    let image: Buffer;
+    const local = /^\/downloads\/apps\/covers\/([a-z0-9-]+\.png)$/.exec(url);
+    const thumbnail = /^\/api\/library\/thumbnail\?id=([a-f0-9]{32})$/.exec(url);
+    if (thumbnail) {
+      const preview = await mediaThumbnail(thumbnail[1]);
+      if (!preview) return null;
+      image = preview;
+    } else if (local) {
+      const file = path.join(process.env.APPS_DIR || path.join(process.cwd(), "public", "downloads", "apps"), "covers", local[1]);
+      if ((await stat(file)).size > MAX_IMAGE_BYTES) return null;
+      image = await readFile(file);
+      if (image.length > MAX_IMAGE_BYTES) return null;
+    } else {
+      const response = await fetch(url, { signal: AbortSignal.timeout(4000), cache: "no-store" });
+      if (!response.ok || !response.body || Number(response.headers.get("Content-Length")) > MAX_IMAGE_BYTES) {
+        await response.body?.cancel();
+        return null;
       }
-    } finally { reader.releaseLock(); }
-    const rgba = await sharp(Buffer.concat(chunks), { limitInputPixels: 16_000_000, animated: false })
+      const reader = response.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let length = 0;
+      try {
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          length += value.length;
+          if (length > MAX_IMAGE_BYTES) { await reader.cancel(); return null; }
+          chunks.push(value);
+        }
+      } finally { reader.releaseLock(); }
+      image = Buffer.concat(chunks);
+    }
+    const rgba = await sharp(image, { limitInputPixels: 16_000_000, animated: false })
       .rotate().resize(size, size, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
       .toColourspace("srgb").ensureAlpha().raw().toBuffer();
     const headerSize = size === 64 ? 8 : 12;
@@ -52,7 +71,7 @@ export async function dsiCover(params: URLSearchParams): Promise<Response> {
   if (sizeParam != null && sizeParam !== "64" && sizeParam !== "88") throw new DsiError("Unsupported cover size");
   const size = sizeParam === "88" ? 88 : 64;
   const { rom, data } = await lookup(id, system);
-  const url = coverUrl(data.meta, rom);
+  const url = rom.g?.includes("Themes") ? (await findTheme(id))?.screenshots[0]?.url : coverUrl(data.meta, rom);
   if (!url) return dsiText("RFERROR1\tNo cover available\n", 404);
 
   const key = `${system}:${id}:${size}:${url}`;

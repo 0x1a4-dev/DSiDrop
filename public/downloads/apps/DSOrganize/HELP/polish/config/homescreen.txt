@@ -1,0 +1,1 @@
+Ta opcja umozliwia zmiane kolejnosci aplikacji w DSOrganize.  Po prostu przeciagnij ikone stylusem w miejsce jakie Ci odpowiada.

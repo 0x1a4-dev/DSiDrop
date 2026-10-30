@@ -1,0 +1,1 @@
+Este ajuste especifica si el explorador muestra o no los archivos ocultos.  Si la visión de archivos ocultos está activada, DSOrganize es capaz también de ocultar y mostrar archivos.

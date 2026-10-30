@@ -1,0 +1,147 @@
+; Magyar nyelvi fájl az 1.9-es verzióhoz.
+; Fordította Kiki az Úr 2006. évében, Május hó akárhanydikán. 
+
+[Errors]
+NoVCard=Nem találtam vCard fájlokat...
+NoFAT=Olyan memóriakártyát használsz ami nem kompatibilis a Chishm FAT rendszerével! Ezt a programot GBAMP vagy más kompatibilis kártyával használd!
+CreateDir=A "DSOrganize" könyvtárat nem találtam! Elkészítettem a program alapbeállításaival együtt. 
+NoFiles=Nincsenek fájlok ebben a könyvtárban...
+RenderError=Hiba lépett fel a fájl feldolgozása közben.
+Preview=Az elonézeti lehetoség nem elérheto, mert a kép felbontása túl alacsony.
+NoToDo=Nem találtam bejegyzést a tennivalókhoz... 
+NoScribble=Még nem készítettél firkálmányt...
+NoId3=Nincs ID3 v1.1 adat!
+
+[Dates]
+Sunday=Vasárnap
+Monday=Hétfo
+Tuesday=Kedd
+Wednesday=Szerda
+Thursday=Csütörtök
+Friday=Péntek
+Saturday=Szombat 
+
+January=Január
+February=Február
+March=Március
+April=Április
+May=Május
+June=Június
+July=Július
+August=Augusztus
+September=Szeptember
+October=Október
+November=November
+December=December 
+
+AM=De.
+PM=Du.
+
+[Address]
+FirstName=Keresztnév
+LastName=Vezetéknév
+Nickname=Becenév
+HomePhone=Otthoni telefon
+CellPhone=Mobiltelefon
+Address=Cím
+City=Város
+State=Ország
+Zip=Irányítószám 
+EMail=E-Mail cím
+Comment=Megjegyzések
+
+[Navigation]
+Home=Fomenu
+Welcome=Üdvözöllek
+Previous=Elozo
+Next=Következo
+EditReminder=Szerkesztés
+ViewDay=Napnézet
+DayView=Napi szervezo
+Save=Mentés 
+Back=Vissza
+EditSelected=Szerkesztés
+Calendar=Naptár
+Create=Készítés
+PreviousField=Elozo mezo
+NextField=Következo mezo
+Configuration=Beállítások
+AddressBook=Címtár
+Language=Nyelv
+StartScreen=Indító képernyo 
+TimeFormat=Idoformátum
+NameFormat=Névformátum
+First=Kereszt
+Last=Vezeték
+Unknown=Ismeretlen
+Browser=Fájlkezelo
+Open=Megnyitás
+Launch=Indítás
+PrevDay=Elozo nap
+NextDay=Következo nap
+Up=Könyvtár fel 
+NewFile=Új fájl
+Delete=Törlés
+Rename=Átnevezés
+Copy=Másolás
+Paste=Beillesztés
+More=Funkciók
+Confirm=Elfogadás
+Filename=Fájlnév
+Calculator=Számológép
+Yes=Igen
+No=Nem
+ShowHidden=Rejtett fájlok mutatása 
+Memory=Memória
+Edit=Szerkesztés
+PageUp=Következo oldal
+PageDown=Elozo oldal
+Working=Folyamatban
+ChoosePal=Válassz Pallate fájlt
+Reset=Alaphelyzet
+ToDo=Teendok listája
+Title=Megnevezés
+ScribblePad=Firkáló 
+SaveFormat=A firkálmány mentési fomátuma
+Pause=Szünet
+Play=Lejátszás
+SoundMode=Lejátszás mód
+OneShot=Egyszeru fájl
+Sequential=Folyamatos
+NextFile=Következo fájl
+PrevFile=Elozo fájl
+RandFile=Véletlenszeru 
+Hold=Felfüggesztés
+DataBase=Adatbázis
+
+[Regional]
+Numbers=1234567890-=
+Symbols=!@#$%^&*()_+
+Lowercase=qwertyuiopasdfghjklzxcvbnm,./;'[]
+Uppercase=QWERTYUIOPASDFGHJKLZXCVBNM<>?:"{}
+Special1=ráâaälcéeëeíîdnnóôoöuúuüý   dt~cç
+Special2=RÁÂAÄLCÉEËEÍÎDNNÓÔOÖUÚUÜÝ   ÐTßCÇ
+
+[Browser]
+FileSize=Fájlméret
+FileType=Fájltípus
+NDSFile=Nintendo DS fájl
+TXTFile=Szövegfájl
+VCFFile=vCard fájl 
+DPLFile=Napi szervezo fájl
+REMFile=Emlékezteto fájl
+PicFile=Képfájl
+Directory=Könyvtár
+Unknown=Ismeretlen formátum
+BINFile=Raw Mode 5 adat
+TodoFile=Tennivaló fájl
+SoundFile=Hangfájl
+
+[Id3]
+Title=Cím
+Artist=Eloadó
+Album=Album
+Genre=Stílus
+Comment=Megjegyzés
+Year=Év
+Track=Sorszám

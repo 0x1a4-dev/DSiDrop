@@ -1,0 +1,1 @@
+This setting affects how DSOrganize displays all dates, including those in the homebrew database.  Written dates are also affected by this setting, though not dates typed in manually on any screens.

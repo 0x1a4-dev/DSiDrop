@@ -1,0 +1,1 @@
+This setting allows you to tell DSOrganize which hand you prefer holding the stylus in.  The scrollbars in the application will all be moved to reflect this setting.

@@ -1,0 +1,1 @@
+Ta opcja pozwala Ci wybrac jak ma startowac DSOrganize. Baza homebrew nie jest dostepna w tej opcji.

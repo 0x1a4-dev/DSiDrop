@@ -1,0 +1,1 @@
+Gdy opcja jest aktywna, przycisniecie stylusem wybranej wczesniej ikony zadziala tak samo jak przycisniecie przycisku A.  To cos podobnego do podwojnego klikniecia w Windows z tym, ze przerwa pomiedzy pierwszym i drugim przycisnieciem moze byc dowolna.

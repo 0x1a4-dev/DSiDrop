@@ -1,0 +1,1 @@
+This setting controls the screen orientation of the picture viewer under the file browser.  If you select landscape, it will display normal.  If you select letter, it will display sideways, with the image to the left or right of the screen depending on your hand selection under global settings.

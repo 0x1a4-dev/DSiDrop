@@ -1,0 +1,320 @@
+; Sample language file by Shaun taylor
+; Version 3.2
+
+[Errors]
+
+NoFAT=You are not using a card that is compatible with Chishm's FAT library.  Please make sure you have properly DLDI patched DSOrganize!
+CreateDir=The 'DSOrganize' directory was not found!  It has been created for you, along with default settings.
+
+RenderError=An error occured while rendering the file.	
+Preview=Preview mode not available because the image is too small.
+NoId3=ID3 v1.1 data not present!
+
+NoDefaultBoot=There is no built in bootloader for your card.  Please configure the bootloaders in the configuration screen.
+LaunchChishm=Attempting to launch your file with the Chishm loader.
+NoDLDI=You haven't patched DSOrganize with any DLDI file.  The Chishm loader requires you to have a DLDI patched DSOrganize or a dldi file in your resources directory.
+AutoPatch=Attempting to patch with DLDI...
+
+OutOfMemory=Fatal Error!  DSOrganize has run out of memory.
+FatalIRC=Fatal Error!  There is no room in the command buffer for new commands.
+OutOfFiles=Fatal Error!  DSOrganize has run out of free file handles.
+DoubleFree=Fatal Error!  DSOrganize has failed to free a block of memory.
+
+NoWifi=No access points found...
+NoVCard=No vCard files found...
+NoFiles=No files in this directory...
+NoToDo=No todo entries found...
+NoScribble=No scribble creations found...
+
+
+[Dates]
+Sunday=Sunday
+Monday=Monday
+Tuesday=Tuesday
+Wednesday=Wednesday
+Thursday=Thursday
+Friday=Friday
+Saturday=Saturday
+	
+January=January
+February=February
+March=March
+April=April
+May=May
+June=June
+July=July
+August=August
+September=September
+October=October
+November=November
+December=December
+
+AM=AM
+PM=PM
+
+[Address]
+FirstName=First Name
+LastName=Last Name
+Nickname=Nickname
+HomePhone=Home Phone
+WorkPhone=Work Phone
+CellPhone=Cell Phone
+Address=Address
+City=City
+State=State
+Zip=Postal Code
+EMail=E-Mail
+Comment=Comments
+
+[Navigation]
+Home=Home Screen
+Welcome=Welcome
+Previous=Prev
+Next=Next
+Reminder=Reminder
+EditReminder=Edit Reminder
+ViewDay=View Day
+DayView=Day Planner
+Save=Save
+Back=Back
+EditSelected=Edit Selected
+Calendar=Calendar
+Create=Create
+PreviousField=Prev Field
+NextField=Next Field
+Configuration=Configuration
+AddressBook=Address Book
+Language=Language
+StartScreen=Startup Screen
+TimeFormat=Time Format
+NameFormat=Name Format
+First=First
+Last=Last
+Unknown=Unknown
+Browser=Browser
+Open=Open
+Launch=Launch
+PrevDay=Previous Day
+NextDay=Next Day
+Up=Up
+NewFile=New File
+Delete=Delete
+Rename=Rename
+Copy=Copy
+Paste=Paste
+More=More
+Confirm=Confirm
+Filename=Filename
+Calculator=Calculator
+Yes=Yes
+No=No
+ShowHidden=Show Hidden Files
+Memory=Memory
+Edit=Edit
+PageUp=Page Up
+PageDown=Page Down
+Working=Working
+ChoosePal=Choose Pallate File
+Reset=Reset
+ToDo=Todo List
+Title=Title
+ScribblePad=Scribble Pad
+SaveFormat=Scribble Save Format
+Pause=Pause
+Play=Play
+SoundMode=Playback Mode
+OneShot=Single File
+Sequential=Sequential
+NextFile=Next File
+PrevFile=Prev File
+RandFile=Random
+Hold=Hold
+DataBase=Homebrew Database
+View=View
+Hide=Toggle Hidden
+Done=Done
+Cancel=Cancel
+Date=Date
+Version=Version
+Size=Size
+HTMLMode=HTML Rendering Mode
+SecondClick=Action on Second Click
+DateFormat=Date Format
+TextOnly=Text Only
+Extended=Extended
+ExtendedImages=Extended with Images
+NameSort=Sort by Name
+DateSort=Sort by Date
+Swap=Swap
+Record=Record
+RecordMode=Recording Mode
+Playback=Playback
+Length=Length
+Stop=Stop
+IRC=IRC
+Send=Send
+Disconnect=Disconnect
+Reconnect=Reconnect
+LaunchAlt=Launch Alternate
+MKDir=New Dir
+Cut=Cut
+DefaultHomebrew=Default Homebrew Directory
+Proxy=HTTP Proxy
+Drag=Drag the icons with your stylus to arrange the home screen as desired.
+AutoConnect=Autoconnect to IRC Server
+IRCNickname=IRC Nickname
+IRCServer=IRC Server
+IRCAltNick=IRC Alternate Nickname
+None=None
+SwapAB=Swap A/B Buttons
+NormalBoot=Default Boot Method
+AltBoot=Alternate Boot Method
+AutoBullet=Auto Bullets in Todo
+Volume=Volume
+NewDir=New Directory
+IconSet=Icon Set
+SettingDescription=Setting Description
+LoadPicture=Loading picture...
+Continue=Continue
+Rendering=Rendering...
+SavePicture=Saving picture...
+ToChange=to change
+Game=Game
+Go=Go
+WebBrowser=Web Browser
+Forward=Forward
+Homepage=Home Page
+Query=Query
+Append=Append
+Author=Author
+Composer=Composer
+Converter=Converter
+Ripper=Ripper
+Fixed=Fixed Width
+Variable=Variable Width
+EditorFont=Editor Font
+IRCFont=IRC Font
+HandPosition=Hand Position
+LeftHand=Left Handed
+RightHand=Right Handed
+Daily=Once
+Weekly=Weekly
+Monthly=Monthly
+Annually=Annually
+WifiMode=Wifi Mode
+Firmware=Firmware
+FixedIP=Fixed IP
+AutoDNS=Auto DNS
+ManualDNS=Manual DNS
+Scan=Scan
+WEPKey=WEP Key
+IP=IP Address
+Subnet=Subnet
+Gateway=Gateway
+PrimaryDNS=Primary DNS
+SecondaryDNS=Secondary DNS
+AutoHide=Auto Hide On Navigate
+DownloadDir=Download Directory
+DisplayOrientation=Display Orientation
+Landscape=Landscape
+Letter=Letter
+KeySound=Keyboard Sound
+ClickNoise=Click Noise
+Silent=Silent
+Exit=Exit
+
+[Regional]
+Numbers=1234567890-=
+Symbols=!@#$%^&*()_+
+Lowercase=qwertyuiopasdfghjklzxcvbnm,./;'[]
+Uppercase=QWERTYUIOPASDFGHJKLZXCVBNM<>?:"{}
+Special1=‡·‚„‰ÂËÈÍÎÏÌÓÔÒÚÛÙıˆ˘˙˚¸˝ °ø˛~ÊÁ
+Special2=¿¡¬√ƒ≈»… ÀÃÕŒœ—“”‘’÷Ÿ⁄€‹› °ø–ﬁﬂ∆«
+
+[Browser]
+FileSize=File Size
+FileType=File Type
+NDSFile=Nintendo DS File
+TXTFile=Text File
+VCFFile=vCard File
+DPLFile=Day Planner File
+REMFile=Reminder File
+PicFile=Picture
+Directory=Directory
+Unknown=Unknown Format
+BINFile=Raw Mode 5 Data
+TodoFile=Todo File
+SoundFile=Audio File
+PlayListFile=Playlist
+HBFile=Custom Database File
+PKGFile=Custom Package File
+PluginFile=Plugin
+ExeFile=DSOrganize Executable
+ShortcutFile=DSOrganize Shortcut
+
+[Id3]
+Title=Title
+Artist=Artist
+Album=Album
+Genre=Genre
+Comment=Comment
+Year=Year
+Track=Track No
+
+[Streaming]
+Buffer=Buffer
+Status=Status
+NotConnected=Not connected.
+Associating=Associating...
+Connecting=Connecting to stream...
+ErrorConnecting=There was an error connecting!
+Streaming=Streaming!
+Buffering=Buffering stream...
+Playing=Playing
+
+[Database]
+ChangedDirectory=Changed to directory
+AlreadyExists=already exists
+CreatedDirectory=Created directory
+StartedDownload=Started download from
+ConnectingHost=Connecting to host...
+Deleted=Deleted
+MOTD=MOTD
+Description=Description
+Retrieving=Retrieving...
+ErrorRetrieving=Unable to retrieve.
+GettingPackage=Getting package information.
+FailedPackage=Failed downloading package contents.
+Connecting=Connecting...
+GetMOTD=Getting MOTD...
+GetList=Getting list...
+Download=Download
+NoDBEntries=No entries in database!
+Refresh=Refresh List
+Input=Waiting for input
+
+[IRC]
+Disconnected=Disconnected from server.
+Connecting=Connecting to
+HelpAvailable=Type /help for available commands!
+Connected=Connected to hotspot!
+FailedConnect=Failed to connect.
+CancelledConnect=Cancelled connect.
+CannotConnect=Could not connect to server!
+ServerClosed=Server closed connection.
+On=on
+Limit=Limit
+Key=Key
+ConversationWith=Conversation with
+
+[Settings]
+Global=Global Settings
+Home=Home Screen Settings
+Browser=Browser Settings
+Scribble=Scribble Settings
+Todo=Todo Settings
+Web=Web Browser Settings
+IRC=IRC Settings
+Editor=Text Editor Settings
+Wifi=Wifi Settings
+Image=Image Viewer Settings

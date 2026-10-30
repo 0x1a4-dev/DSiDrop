@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <time.h>
@@ -49,6 +50,8 @@ static PrintConsole top, bottom;
 static PrintConsole *activeScreen;
 static Game games[PAGE_SIZE];
 static char query[81], response[4096];
+static char appPath[200] = "/DSiDrop.nds";
+static bool appPathKnown;
 // Calico's default main stack has less than 16 KiB available in DTCM.
 // File verification and transfer run sequentially; share a main-RAM buffer.
 static unsigned char fileBuffer[16384];
@@ -78,6 +81,20 @@ static char startupDetail[96];
 #define ACTION_SYSTEMS (ACTION_NDS | ACTION_GBA | ACTION_OTHERS)
 static const char *regions[] = { "", "Europe", "Germany", "USA", "Japan", "World" };
 static const char *regionLabels[] = { "All regions", "Europe", "Germany", "USA", "Japan", "World" };
+static const char *othersTypes[] = { "", "Apps", "Uploaded", "Themes", "Multimedia" };
+static const char *othersLabels[] = { "All", "Apps", "Your uploads", "Themes", "Multimedia" };
+static const char *themeStyles[] = { "", "dsimenu", "3dsmenu", "r4menu", "akmenu" };
+static const char *themeStyleLabels[] = { "All menu styles", "Nintendo DSi", "Nintendo 3DS", "R4 Original", "Wood UI" };
+static unsigned themeStyle;
+static bool themeFavoritesOnly;
+
+static unsigned filterCount(void) {
+    return activeSystem == SYSTEM_OTHERS ? sizeof(othersTypes) / sizeof(othersTypes[0]) : sizeof(regions) / sizeof(regions[0]);
+}
+
+static const char *filterLabel(unsigned index) {
+    return activeSystem == SYSTEM_OTHERS ? othersLabels[index] : regionLabels[index];
+}
 
 static int catalogInput(int pending) {
     return keysDown() | (keysDownRepeat() & (KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT)) | pending;
@@ -489,7 +506,7 @@ static bool configureWifi(void) {
     return true;
 }
 
-typedef enum { CONFIG_NONE, CONFIG_SERVER, CONFIG_WIFI, CONFIG_FILTER } ConfigChange;
+typedef enum { CONFIG_NONE, CONFIG_SERVER, CONFIG_WIFI, CONFIG_FILTER, CONFIG_UPDATE } ConfigChange;
 
 static void drawSettings(void) {
     clear(&top);
@@ -502,7 +519,7 @@ static void drawSettings(void) {
     uiPanel(true, 8, 120, 240, 56, 2);
     position(&top, 16, 3); iprintf("\x1b[39m");
     wrapped(clientConnectionDetail(), 3);
-    position(&top, 23, 3); iprintf("\x1b[37mRegion: %.20s", regionLabels[regionIndex]);
+    position(&top, 23, 3); iprintf("\x1b[37m%s: %.20s", activeSystem == SYSTEM_OTHERS ? "Category" : "Region", filterLabel(regionIndex));
     frame(&bottom, "SETTINGS");
     uiButton(168, 0, 80, 24, 2);
     position(&bottom, 2, 23); iprintf("\x1b[36m[B]\x1b[39m Back");
@@ -513,10 +530,11 @@ static void drawSettings(void) {
     position(&bottom, 13, 3); iprintf("\x1b[36m[A]\x1b[39m Set up WPA2 Wi-Fi");
     uiButton(8, 116, 240, 24, 2);
     position(&bottom, 16, 3); iprintf("\x1b[36m[X]\x1b[39m Change PC address");
-    uiButton(8, 144, 240, 24, 2);
-    position(&bottom, 20, 3); iprintf("\x1b[36m[Y]\x1b[39m Use system Wi-Fi");
+    uiButton(8, 144, 136, 24, 2); uiButton(152, 144, 96, 24, 8);
+    position(&bottom, 20, 3); iprintf("\x1b[36m[Y]\x1b[39m System WiFi");
+    position(&bottom, 20, 21); iprintf("\x1b[36m[L]\x1b[39m Update");
     uiButton(4, 176, 122, 16, 2); uiButton(130, 176, 122, 16, 2);
-    position(&bottom, 23, 2); iprintf("\x1b[36m[R]\x1b[39m Region");
+    position(&bottom, 23, 2); iprintf("\x1b[36m[R]\x1b[39m %s", activeSystem == SYSTEM_OTHERS ? "Category" : "Region");
     position(&bottom, 23, 18); iprintf("\x1b[36m[START]\x1b[39m WiFi");
     settingsVisible = true;
     uiPresent();
@@ -531,14 +549,15 @@ static ConfigChange configure(void) {
             if (touch.py < 24) key |= KEY_B;
             else if (touch.py >= 88 && touch.py < 112) key |= KEY_A;
             else if (touch.py >= 116 && touch.py < 140) key |= KEY_X;
-            else if (touch.py >= 144 && touch.py < 168) key |= KEY_Y;
+            else if (touch.py >= 144 && touch.py < 168) key |= touch.px < 148 ? KEY_Y : KEY_L;
             else if (touch.py >= 176) key |= touch.px < 128 ? KEY_R : KEY_START;
         }
         if ((key & KEY_START) && (keysHeld() & KEY_L)) { quitting = true; return CONFIG_NONE; }
         if (key & (KEY_B | KEY_SELECT)) return CONFIG_NONE;
+        if (key & KEY_L) return CONFIG_UPDATE;
         if (key & KEY_START) return CONFIG_WIFI;
         if (key & KEY_R) {
-            regionIndex = (regionIndex + 1) % (sizeof(regions) / sizeof(regions[0]));
+            regionIndex = (regionIndex + 1) % filterCount();
             return CONFIG_FILTER;
         }
         if ((key & KEY_A) && configureWifi()) return CONFIG_WIFI;
@@ -555,6 +574,8 @@ static ConfigChange configure(void) {
 }
 
 static void registerClient(void) {
+    savesConnect();
+    libraryConnect(appPath);
     clientConnect();
     startup(2, "Registering this DSi...");
     bool registered = clientRegister();
@@ -603,7 +624,13 @@ static bool fetchPage(int requestedPage) {
     } else if (startupVisible) startup(2, "Loading your catalog...");
     else progress("Loading library", "Fetching search results from your PC...", 0, 0);
     urlEncode(query, encoded, sizeof(encoded));
-    snprintf(path, sizeof(path), "/api/dsi/catalog?system=%s&q=%s&page=%d&region=%s", systemKey(activeSystem), encoded, requestedPage, regions[regionIndex]);
+    bool others = activeSystem == SYSTEM_OTHERS;
+    snprintf(path, sizeof(path), "/api/dsi/catalog?system=%s&q=%s&page=%d&%s=%s", systemKey(activeSystem), encoded, requestedPage,
+        others ? "type" : "region", others ? othersTypes[regionIndex] : regions[regionIndex]);
+    if (others && regionIndex == 3) {
+        size_t used = strlen(path);
+        snprintf(path + used, sizeof(path) - used, "&style=%s&favorites=%u", themeStyles[themeStyle], themeFavoritesOnly ? 1 : 0);
+    }
     if (!httpText("GET", path, response, sizeof(response))) return false;
 
     Game newGames[PAGE_SIZE] = {0};
@@ -672,12 +699,12 @@ static void drawBrowser(void) {
     position(&top, 2, 6); iprintf("\x1b[36m" APP_NAME "\x1b[39m");
     position(&top, 2, 17); iprintf("\x1b[37m%s", clientRegistered() ? "WEB OK" : "WEB...");
     position(&top, 2, 26); iprintf("\x1b[37m%d/%d", count ? selected + 1 : 0, count);
-    static const char *libraryNames[] = { "NINTENDO DS", "GAME BOY ADVANCE", "YOUR UPLOADS" };
+    static const char *libraryNames[] = { "NINTENDO DS", "GAME BOY ADVANCE", "APPS & UPLOADS" };
     position(&top, 3, 6); iprintf("\x1b[37m%s / LIBRARY", libraryNames[activeSystem]);
     int first = selected < 6 ? 0 : selected - 5;
     if (!count) {
         position(&top, 9, 3); iprintf("\x1b[39mNo games found.");
-        position(&top, 12, 3); iprintf("\x1b[37m%s", activeSystem == SYSTEM_OTHERS ? "Upload .nds files on your PC." : "Try a different search.");
+        position(&top, 12, 3); iprintf("\x1b[37m%s", activeSystem == SYSTEM_OTHERS ? "Upload files on your PC." : "Try a different search.");
     }
     for (int i = first; i < count && i < first + 6; i++) {
         int y = 32 + (i - first) * 24;
@@ -704,11 +731,11 @@ static void drawBrowser(void) {
     if (count) drawGameDetail(&games[selected], browserNotice);
     else {
         position(&bottom, 6, 3); iprintf("\x1b[39m");
-        wrapped(activeSystem == SYSTEM_OTHERS ? "Add your own .nds files in the web app's Others library." : "Search for a game to see its details.", 3);
+        wrapped(activeSystem == SYSTEM_OTHERS ? "Add your own files in the web app's Others library." : "Search for a game to see its details.", 3);
     }
     uiButton(4, 124, 248, 20, 3);
     uiPanel(false, 6, 126, 244, 16, 2);
-    position(&bottom, 17, 3); iprintf("\x1b[37mRegion\x1b[39m  %.17s", regionLabels[regionIndex]);
+    position(&bottom, 17, 3); iprintf("\x1b[37m%s\x1b[39m  %.17s", activeSystem == SYSTEM_OTHERS ? "Category" : "Region", filterLabel(regionIndex));
     uiChevron(236, 132);
     uiButton(4, 144, 122, 23, 2); uiButton(130, 144, 122, 23, 2);
     position(&bottom, 20, 2); iprintf("\x1b[36m[X]\x1b[39m Search");
@@ -722,30 +749,58 @@ static void drawBrowser(void) {
     uiPresent();
 }
 
+static void chooseThemeStyle(void) {
+    unsigned choice = themeStyle;
+    while (!quitting) {
+        frame(&bottom, "THEME MENU STYLE");
+        for (unsigned index = 0; index < 5; index++) {
+            int y = 28 + index * 22;
+            uiButton(8, y, 240, 21, index == choice ? 8 : 2);
+            position(&bottom, (y + 4) / 8 + 1, 4); iprintf("%s %s", index == choice ? ">" : " ", themeStyleLabels[index]);
+        }
+        uiButton(8, 140, 240, 24, 2);
+        position(&bottom, 19, 3); iprintf("[X] Favorites only: %s", themeFavoritesOnly ? "ON" : "OFF");
+        uiButton(8, 168, 240, 24, 2);
+        position(&bottom, 23, 3); iprintf("[A] Select  [B] Back");
+        int key = waitKey();
+        if (key & KEY_TOUCH) {
+            if (lastTouch.py >= 168) key |= KEY_B;
+            else if (lastTouch.py >= 140) key |= KEY_X;
+            else if (lastTouch.py >= 28 && lastTouch.py < 138) { choice = (lastTouch.py - 28) / 22; key |= KEY_A; }
+        }
+        if (key & KEY_UP) choice = (choice + 4) % 5;
+        if (key & KEY_DOWN) choice = (choice + 1) % 5;
+        if (key & KEY_X) themeFavoritesOnly = !themeFavoritesOnly;
+        if (key & (KEY_A | KEY_B)) { themeStyle = choice; return; }
+    }
+}
+
 static bool chooseRegion(void) {
     unsigned choice = regionIndex;
+    unsigned options = filterCount();
     while (!quitting) {
-        frame(&bottom, "SELECT REGION");
-        for (unsigned i = 0; i < sizeof(regions) / sizeof(regions[0]); i++) {
+        frame(&bottom, activeSystem == SYSTEM_OTHERS ? "SELECT CATEGORY" : "SELECT REGION");
+        for (unsigned i = 0; i < options; i++) {
             int y = 28 + i * 22;
             uiButton(8, y, 240, 21, i == choice ? 8 : 2);
             if (i == choice) uiPanel(false, 8, y + 2, 3, 17, 4);
             position(&bottom, (y + 4) / 8 + 1, 4);
-            iprintf(i == choice ? "\x1b[36m>\x1b[39m %s" : "\x1b[37m  %s", regionLabels[i]);
+            iprintf(i == choice ? "\x1b[36m>\x1b[39m %s" : "\x1b[37m  %s", filterLabel(i));
         }
         uiButton(8, 168, 240, 24, 2);
         position(&bottom, 23, 3); iprintf("\x1b[36m[B]\x1b[39m Cancel   \x1b[37m[A] Select");
         int key = waitKey();
         if (key & KEY_TOUCH) {
             if (lastTouch.py >= 168) key |= KEY_B;
-            else if (lastTouch.py >= 28 && lastTouch.py < 160) { choice = (lastTouch.py - 28) / 22; key |= KEY_A; }
+            else if (lastTouch.py >= 28 && lastTouch.py < 28 + (int)options * 22) { choice = (lastTouch.py - 28) / 22; key |= KEY_A; }
         }
         if (key & (KEY_B | KEY_SELECT)) return false;
-        if (key & KEY_UP) choice = (choice + 5) % 6;
-        if (key & KEY_DOWN) choice = (choice + 1) % 6;
+        if (key & KEY_UP) choice = (choice + options - 1) % options;
+        if (key & KEY_DOWN) choice = (choice + 1) % options;
         if (key & (KEY_A | KEY_START)) {
             bool changed = choice != (unsigned)regionIndex;
             regionIndex = choice;
+            if (activeSystem == SYSTEM_OTHERS && choice == 3) { chooseThemeStyle(); return true; }
             return changed;
         }
     }
@@ -767,24 +822,42 @@ static bool checkFile(const char *file, uint32_t expectedSize, uint32_t expected
     return ok && size == expectedSize && (crc ^ 0xffffffffU) == expectedCrc;
 }
 
-static bool transfer(const Game *game, const Job *job) {
-    char destination[200], partial[210], path[160];
-    const char *directory = downloadDirectory(game->system);
-    snprintf(destination, sizeof(destination), "%s/%s", directory, job->name);
-    snprintf(partial, sizeof(partial), "%s.part", destination);
-    if ((mkdir("/roms", 0777) && errno != EEXIST) || (mkdir(directory, 0777) && errno != EEXIST)) {
+static bool transfer(const Game *game, const Job *job, const char *updateDestination) {
+    char destination[200], partial[232], path[160];
+    bool update = updateDestination != NULL;
+    size_t nameLength = strlen(job->name);
+    bool theme = !update && game->system == SYSTEM_OTHERS && nameLength > 6 && !strcmp(job->name + nameLength - 6, ".theme");
+    bool folder = !update && game->system == SYSTEM_OTHERS && nameLength > 7 && !strcmp(job->name + nameLength - 7, ".folder");
+    const char *media = !update && game->system == SYSTEM_OTHERS ? mediaDirectory(job->name) : NULL;
+    const char *directory = update ? "/" : media ? media : downloadDirectory(game->system);
+    if (update) {
+        snprintf(destination, sizeof(destination), "%s", updateDestination);
+        snprintf(partial, sizeof(partial), "%s.update-%08lx.part", destination, (unsigned long)job->crc);
+    } else {
+        snprintf(destination, sizeof(destination), "%s/%s", directory, job->name);
+        if (theme || folder) snprintf(partial, sizeof(partial), "%s.%08lx.part", destination, (unsigned long)job->crc);
+        else snprintf(partial, sizeof(partial), "%s.part", destination);
+    }
+    if (!update && ((!media && mkdir("/roms", 0777) && errno != EEXIST) || (mkdir(directory, 0777) && errno != EEXIST))) {
         strcpy(lastError, "Could not create the download folder"); return false;
     }
     struct stat info;
     if (!stat(destination, &info)) {
         progress(game->title, "Checking the existing file...", 0, 0);
         if (checkFile(destination, job->size, job->crc)) {
-            if (!queueRunning && !clientActive()) message("Already on your SD card", destination);
+            if (theme || folder) {
+                bool installed = folder ? installFolder(destination, lastError, sizeof(lastError)) : installTheme(destination, lastError, sizeof(lastError));
+                if (installed) { remove(destination); if (!queueRunning && !clientActive()) message(folder ? "Folder installed" : "Theme installed", lastError); }
+                return installed;
+            }
+            if (!update && !queueRunning && !clientActive()) message("Already on your SD card", destination);
             return true;
         }
         if (*lastError) return false;
-        strcpy(lastError, "A different file already uses this name. Rename or remove it using your PC.");
-        return false;
+        if (!update) {
+            strcpy(lastError, "A different file already uses this name. Rename or remove it using your PC.");
+            return false;
+        }
     }
     uint32_t offset = 0, crc = 0xffffffffU;
     if (!stat(partial, &info)) {
@@ -818,7 +891,8 @@ static bool transfer(const Game *game, const Job *job) {
     uint32_t received = offset;
     if (offset < job->size) {
         Http *http = &downloadHttp;
-        snprintf(path, sizeof(path), "/api/dsi/file?system=%s&id=%s", systemKey(game->system), game->id);
+        if (update) snprintf(path, sizeof(path), "/api/dsi/update?file=1&crc=%08lx&size=%lu", (unsigned long)job->crc, (unsigned long)job->size);
+        else snprintf(path, sizeof(path), "/api/dsi/file?system=%s&id=%s", systemKey(game->system), game->id);
         progress(game->title, offset ? "Resuming your SD download..." : "Downloading to your SD card...", offset, job->size);
         if (!httpOpen(http, "GET", path, offset)) { fclose(output); return false; }
         if (http->status != (offset ? 206 : 200) || http->length != job->size - offset ||
@@ -863,10 +937,16 @@ static bool transfer(const Game *game, const Job *job) {
         remove(partial);
         strcpy(lastError, "CRC32 mismatch. Partial file removed. Press A to download again."); return false;
     }
+    if (update) return installAppUpdate(partial, destination, lastError, sizeof(lastError));
+    if (theme || folder) {
+        bool installed = folder ? installFolder(partial, lastError, sizeof(lastError)) : installTheme(partial, lastError, sizeof(lastError));
+        if (installed) { remove(partial); if (!queueRunning && !clientActive()) message(folder ? "Folder installed" : "Theme installed", lastError); }
+        return installed;
+    }
     if (rename(partial, destination)) { strcpy(lastError, "Could not rename the completed file. Press A to retry."); return false; }
     if (!queueRunning && !clientActive()) {
         char text[192];
-        snprintf(text, sizeof(text), "Saved to %s/. Return to TWiLight Menu++ to start your game. START: exit app.", directory);
+        snprintf(text, sizeof(text), media ? "Saved to %s/. START: exit app." : "Saved to %s/. Return to TWiLight Menu++ to start your game. START: exit app.", directory);
         message("Download complete", text);
     }
     return true;
@@ -895,7 +975,64 @@ static bool prepareAndTransfer(const Game *game, void *context) {
         snprintf(path, sizeof(path), "/api/dsi/status?system=%s&id=%s", systemKey(game->system), game->id);
         if (!httpText("GET", path, response, sizeof(response))) return false;
     }
-    return transfer(game, &job);
+    return transfer(game, &job, NULL);
+}
+
+static void updateApp(void) {
+    coverPausePrefetch();
+    lastError[0] = 0;
+    progress("DSiDrop update", "Checking the PC server build...", 0, 0);
+    if (!httpText("GET", "/api/dsi/update", response, sizeof(response))) { message("Update", lastError); return; }
+    Job job;
+    if (!parseJobForSystem(response, &job, SYSTEM_NDS) || strcmp(job.state, "ready") || strcmp(job.name, "DSiDrop.nds") || job.size > 16U * 1024U * 1024U) {
+        message("Update", "Invalid update response. Update your PC server first."); return;
+    }
+    if (checkFile(appPath, job.size, job.crc)) {
+        message("Already up to date", "This file already matches the build provided by your PC server."); return;
+    }
+    if (*lastError || quitting) return;
+    frame(&bottom, "UPDATE DSIDROP");
+    position(&bottom, 5, 3); iprintf("\x1b[37mRunning: " APP_VERSION);
+    position(&bottom, 7, 3); iprintf("PC build: %08lx", (unsigned long)job.crc);
+    position(&bottom, 10, 3); iprintf("\x1b[39mInstall to:");
+    position(&bottom, 12, 3); wrapped(appPath, 3);
+    position(&bottom, 16, 3); iprintf("\x1b[37m%s", appPathKnown ? "Old app saved as .nds.bak" : "No launch path: SD root copy");
+    uiButton(8, 144, 240, 24, 4); uiButton(8, 168, 240, 24, 2);
+    position(&bottom, 20, 3); iprintf("\x1b[35m[A] Install update\x1b[39m");
+    position(&bottom, 23, 3); iprintf("\x1b[37m[B] Cancel");
+    for (;;) {
+        int key = waitKey();
+        if (quitting) return;
+        if (key & KEY_TOUCH) {
+            if (lastTouch.py >= 144 && lastTouch.py < 168) key |= KEY_A;
+            else if (lastTouch.py >= 168) key |= KEY_B;
+        }
+        if (key & KEY_B) return;
+        if (key & KEY_A) break;
+    }
+    Game game = { .system = SYSTEM_NDS };
+    strcpy(game.title, "DSiDrop update");
+    transferSystem = SYSTEM_NDS;
+    if (!transfer(&game, &job, appPath)) { if (!quitting) message("Update failed", lastError); return; }
+    message("Update installed", "Close this message to exit, then reopen DSiDrop from TWiLight Menu++. The previous build is kept as .nds.bak.");
+    quitting = true;
+}
+
+static void findAppPath(int argc, char **argv) {
+    if (argc < 1 || !argv || !argv[0]) return;
+    const char *extension = strrchr(argv[0], '.');
+    if (!extension || strcasecmp(extension, ".nds")) return;
+    char candidate[sizeof(appPath)], current[sizeof(appPath)];
+    int length;
+    if (argv[0][0] == '/' || strchr(argv[0], ':')) length = snprintf(candidate, sizeof(candidate), "%s", argv[0]);
+    else {
+        if (!getcwd(current, sizeof(current))) return;
+        length = snprintf(candidate, sizeof(candidate), "%s/%s", current, argv[0]);
+    }
+    struct stat info;
+    if (length < 0 || (size_t)length >= sizeof(candidate) || stat(candidate, &info) || !S_ISREG(info.st_mode)) return;
+    strcpy(appPath, candidate);
+    appPathKnown = true;
 }
 
 static bool remoteTransfer(void) {
@@ -906,6 +1043,28 @@ static bool remoteTransfer(void) {
     bool canceled = quitting || strstr(lastError, "Paused") || strstr(lastError, "cancelled");
     clientFinish(ok, canceled, ok ? "Saved to SD" : lastError);
     snprintf(browserNotice, sizeof(browserNotice), "%s", ok ? "Web download saved to SD" : canceled ? "Web queue paused on PC" : "Web download failed; check Devices");
+    return true;
+}
+
+static bool remoteLibrary(void) {
+    if (clientPending() || clientActive()) return false;
+    LibraryCommand command;
+    if (!libraryPoll(&command)) return false;
+    coverPausePrefetch();
+    bool ok = libraryExecute(&command);
+    libraryFinish(&command, ok);
+    snprintf(browserNotice, sizeof(browserNotice), "%s", ok ? command.remove ? "ROM deleted; saves preserved" : "Games list updated on PC" : "Library operation failed; check Devices");
+    return true;
+}
+
+static bool remoteSaves(void) {
+    if (clientPending() || clientActive()) return false;
+    SaveCommand command;
+    if (!savesPoll(&command)) return false;
+    coverPausePrefetch();
+    bool ok = savesExecute(&command);
+    savesFinish(&command, ok, lastError);
+    snprintf(browserNotice, sizeof(browserNotice), "%s", ok ? command.restore ? "Save restored" : "Saves backed up to PC" : "Save operation failed; check Backups");
     return true;
 }
 
@@ -1012,8 +1171,83 @@ static void showQueue(void) {
     }
 }
 
+static void previewTheme(const Game *game) {
+    char path[128], magic[8];
+    u16 *pixels = malloc(256 * 384 * 2);
+    if (!pixels) { message("Theme preview", "Not enough memory for preview"); return; }
+    progress(game->title, "Loading dual-screen preview...", 0, 0);
+    snprintf(path, sizeof(path), "/api/themes/preview?id=%s&native=1", game->id);
+    Http *http = &downloadHttp;
+    bool ok = httpOpen(http, "GET", path, 0);
+    unsigned received = 0;
+    if (ok) {
+        ok = http->status == 200 && http->length == 8 + 256 * 384 * 2;
+        unsigned header = 0;
+        while (ok && header < sizeof(magic)) {
+            int amount = httpRead(http, magic + header, sizeof(magic) - header);
+            if (amount <= 0) ok = false; else header += amount;
+        }
+        ok = ok && !memcmp(magic, "RFTMPRE1", 8);
+        while (ok && received < 256 * 384 * 2) {
+            unsigned want = 256 * 384 * 2 - received;
+            if (want > 8192) want = 8192;
+            int amount = httpRead(http, (unsigned char *)pixels + received, want);
+            if (amount <= 0 || !appYield()) ok = false; else received += amount;
+        }
+        httpClose(http);
+    }
+    if (ok) {
+        DC_FlushRange(pixels, 256 * 384 * 2);
+        ok = uiThemePreview(pixels);
+        if (ok) { waitKey(); uiThemePreviewEnd(); }
+    }
+    free(pixels);
+    if (!ok && !quitting) message("Theme preview", "No preview available from the source, or connection interrupted.");
+}
+
+static void themeSelected(Game *game) {
+    bool favorite = strchr(game->languages, '*') != NULL;
+    while (!quitting) {
+        frame(&bottom, "TWILIGHT MENU++ THEME");
+        position(&bottom, 5, 3); wrapped(game->title, 3);
+        position(&bottom, 9, 3); iprintf("%.25s", game->region);
+        position(&bottom, 11, 3); iprintf("Installs to theme folder");
+        uiButton(8, 96, 240, 24, 2);
+        position(&bottom, 14, 3); iprintf("[Y] Dual-screen preview");
+        uiButton(8, 120, 240, 24, 2);
+        position(&bottom, 17, 3); iprintf("[X] Favorite: %s", favorite ? "YES" : "NO");
+        uiButton(8, 144, 240, 24, 4);
+        position(&bottom, 20, 3); iprintf("[A] Install theme");
+        uiButton(8, 168, 240, 24, 2);
+        position(&bottom, 23, 3); iprintf("[B] Back");
+        int key = waitKey();
+        if (key & KEY_TOUCH) {
+            if (lastTouch.py >= 168) key |= KEY_B;
+            else if (lastTouch.py >= 144) key |= KEY_A;
+            else if (lastTouch.py >= 120) key |= KEY_X;
+            else if (lastTouch.py >= 96) key |= KEY_Y;
+        }
+        if (key & KEY_B) return;
+        if (key & KEY_Y) previewTheme(game);
+        else if (key & KEY_X) {
+            char path[128];
+            snprintf(path, sizeof(path), "/api/themes/favorite?id=%s", game->id);
+            if (httpText("POST", path, response, sizeof(response))) {
+                favorite = !favorite;
+                strcpy(game->languages, favorite ? "Themes*" : "Themes");
+            } else message("Favorite", lastError);
+        } else if (key & KEY_A) {
+            if (!prepareAndTransfer(game, NULL) && !quitting) message("Theme installation", lastError);
+            return;
+        }
+    }
+}
+
 static void downloadSelected(void) {
     if (!count) return;
+    if (games[selected].system == SYSTEM_OTHERS && !strncmp(games[selected].languages, "Themes", 6)) {
+        themeSelected(&games[selected]); return;
+    }
     const Game game = games[selected];
     frame(&bottom, "DOWNLOAD TO SD");
     position(&bottom, 5, 3);
@@ -1040,7 +1274,7 @@ static void downloadSelected(void) {
     if (!prepareAndTransfer(&game, NULL) && !quitting) message("Download", lastError);
 }
 
-int main(void) {
+int main(int argc, char **argv) {
     setBrightness(3, -16);
     videoSetMode(MODE_0_2D);
     videoSetModeSub(MODE_0_2D);
@@ -1224,6 +1458,7 @@ int main(void) {
         return 0;
     }
 
+    findAppPath(argc, argv);
     if (chdir("sd:/") != 0 && chdir("fat:/") != 0) {
         message("SD card", "No writable SD drive found."); return 0;
     }
@@ -1255,6 +1490,8 @@ int main(void) {
         clientTick(!key);
         if (revision != clientRevision()) redraw = true;
         if (!key && remoteTransfer()) { redraw = true; continue; }
+        if (!key && remoteLibrary()) { redraw = true; continue; }
+        if (!key && remoteSaves()) { redraw = true; continue; }
         if (!key) {
             if (coverPrefetchTick(selected)) redraw = true;
             continue;
@@ -1271,14 +1508,17 @@ int main(void) {
             if (!fetchPage(page + 1)) message("Library", lastError);
         } else if (key & KEY_SELECT) {
             ConfigChange change = configure();
-            if (change != CONFIG_NONE && !quitting && ((change != CONFIG_FILTER && !connectWifi(change == CONFIG_WIFI)) || !fetchPage(0)))
+            if (change == CONFIG_UPDATE && !quitting) {
+                if (connectWifi(false)) updateApp();
+                else message("Update connection", lastError);
+            } else if (change != CONFIG_NONE && !quitting && ((change != CONFIG_FILTER && !connectWifi(change == CONFIG_WIFI)) || !fetchPage(0)))
                 message("Connection", lastError);
         } else if (key & KEY_X) {
             if (inputText("SEARCH LIBRARY", query, sizeof(query)) && !fetchPage(0)) message("Search", lastError);
         } else if (key & ACTION_REGION) {
             if (chooseRegion()) {
                 drawBrowser();
-                if (!fetchPage(0)) message("Region", lastError);
+                if (!fetchPage(0)) message(activeSystem == SYSTEM_OTHERS ? "Category" : "Region", lastError);
             }
         } else if (key & (KEY_Y | ACTION_RANDOM)) {
             if (!fetchRandomGame()) message("Random game", lastError);

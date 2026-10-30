@@ -1,0 +1,1 @@
+Placing DSO shortcuts in this directory allows them to show up on page three of the home screen.

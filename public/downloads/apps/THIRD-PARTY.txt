@@ -1,0 +1,45 @@
+Homebrew applications distributed with DSiDrop
+============================================
+
+These are separate third-party works, not relicensed under DSiDrop's license.
+Their original credits and notices remain applicable. Local covers are based
+on the applications' embedded icons. The GPL applications are provided without
+warranty; see the accompanying GPL-3.0.txt for the full license terms.
+
+notPipe DSi
+-----------
+Publisher: L-I-O
+Official page: https://l-i-o.itch.io/notpipe-dsi
+Redistribution permission was confirmed by the DSiDrop repository maintainer.
+No separate public license grant is asserted by this notice.
+
+DSOrganize 3.2
+-------------
+Author: DragonMinded
+Official page: https://dragonminded.com/ndsdev/dsorganize/
+Original binary package: https://dragonminded.com/ndsdev/DSOrganize_3_2.zip
+Corresponding source: https://dragonminded.com/ndsdev/DSOrganize_3_2_Src.zip
+License: GNU General Public License, version 3 or any later version.
+License evidence: COPYING and the source-file license headers in the official
+3.2 source archive. A full GPLv3 copy is supplied as GPL-3.0.txt.
+The bundled DSOrganize.nds matches the executable in the original binary ZIP.
+
+pkmn-chest 2.2
+--------------
+Authors: Pk11 and Universal-Team contributors; see the upstream credits.
+Official project: https://github.com/Universal-Team/pkmn-chest/
+Release: https://github.com/Universal-Team/pkmn-chest/releases/tag/v2.2
+Corresponding source: https://github.com/Universal-Team/pkmn-chest/tree/5801dd39fcbbd95caf71149dcd28020cff2cf3df
+License: GNU General Public License, version 3; see GPL-3.0.txt.
+The bundled pkmn-chest.nds is byte-identical to the official v2.2 release.
+
+Obtain the release source, including its submodules and their notices, with:
+git clone --branch v2.2 --recurse-submodules https://github.com/Universal-Team/pkmn-chest.git
+
+The release pins PKSM-Core to commit 27ba4a6ce64bf4206d0cce92f09d223c65dc975d:
+https://github.com/FlagBrew/PKSM-Core/tree/27ba4a6ce64bf4206d0cce92f09d223c65dc975d
+
+Keep this notice and GPL-3.0.txt alongside the applications when redistributing
+them, including in Docker images. Source links must remain available while
+the corresponding GPL binaries are distributed; retain complete release
+sources, including submodules, if upstream hosting becomes unavailable.

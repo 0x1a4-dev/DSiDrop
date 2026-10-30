@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #define APP_NAME "DSiDrop"
-#define APP_VERSION "1.12.0"
+#define APP_VERSION "1.19.0"
 
 #define PAGE_SIZE 10
 #define MAX_GAME_SIZE (512U * 1024U * 1024U)
@@ -60,7 +60,20 @@ bool httpOpenTimeout(Http *http, const char *method, const char *path, uint32_t 
 int httpRead(Http *http, void *buffer, size_t length);
 void httpClose(Http *http);
 bool httpText(const char *method, const char *path, char *output, size_t capacity);
+bool httpUpload(const char *path, FILE *file, uint32_t size);
 void urlEncode(const char *source, char *dest, size_t capacity);
+
+typedef struct { char id[33], path[224]; uint32_t size, crc; bool restore; } SaveCommand;
+void savesConnect(void);
+bool savesPoll(SaveCommand *command);
+bool savesExecute(const SaveCommand *command);
+void savesFinish(const SaveCommand *command, bool success, const char *message);
+
+typedef struct { char id[33], path[224]; uint32_t size, modified, header; bool remove; } LibraryCommand;
+void libraryConnect(const char *executable);
+bool libraryPoll(LibraryCommand *command);
+bool libraryExecute(const LibraryCommand *command);
+void libraryFinish(const LibraryCommand *command, bool success);
 
 bool parseCatalog(char *text, Game *games, int *count, int *total, int *page, int *pages);
 bool parseJob(char *text, Job *job);
@@ -69,6 +82,7 @@ bool parseJobForSystem(char *text, Job *job, RomSystem system);
 const char *systemKey(RomSystem system);
 const char *systemLabel(RomSystem system);
 const char *downloadDirectory(RomSystem system);
+const char *mediaDirectory(const char *name);
 bool gameValid(const Game *game);
 bool queueAdd(DownloadQueue *queue, const Game *game);
 void queueRemove(DownloadQueue *queue, unsigned index);
@@ -76,6 +90,10 @@ bool queueWrite(FILE *file, const DownloadQueue *queue);
 bool queueRead(FILE *file, DownloadQueue *queue);
 bool queueRun(DownloadQueue *queue, QueueTransfer transfer, QueueCheckpoint checkpoint, void *context, unsigned *completed);
 uint32_t crcUpdate(uint32_t crc, const void *data, size_t length);
+uint64_t fileFingerprint(const char *path, uint32_t size, uint32_t modified);
+bool installAppUpdate(const char *partial, const char *destination, char *error, size_t capacity);
+bool installTheme(const char *package, char *error, size_t capacity);
+bool installFolder(const char *package, char *error, size_t capacity);
 
 bool settingsRead(FILE *file, Settings *options, char *error, size_t capacity);
 bool settingsWrite(FILE *file, const Settings *options);

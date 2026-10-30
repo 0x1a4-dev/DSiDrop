@@ -1,0 +1,1 @@
+Falls aktiviert, wird DSOrganize auf dem Arbeitsplan automatisch einen neuen Gliederungspunkt einfügen, wenn sie Enter drücken.

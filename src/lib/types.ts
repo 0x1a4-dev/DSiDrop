@@ -10,6 +10,10 @@ export type Rom = {
   h?: string;
   d?: string;
   e?: string;
+  package?: string;
+  media?: string;
+  folder?: { destination: string; count: number };
+  thumbnail?: true;
   c: string | null;
   x?: 1;
 };
@@ -61,6 +65,9 @@ export type Dataset = {
 
 export type RomCategory =
   | "Retail"
+  | "Apps"
+  | "Multimedia"
+  | "Uploaded"
   | "Demo"
   | "Prototype"
   | "Beta"

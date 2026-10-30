@@ -1,0 +1,1 @@
+Ta opcja pozwala zmienic jezyk wyswietlania tekstu w DSOrganize.  Zwracamy uwage, ze nie wszystkie pliki jezykowe moga byc aktualne poniewaz sa one edytowane przez uzytkownikow.

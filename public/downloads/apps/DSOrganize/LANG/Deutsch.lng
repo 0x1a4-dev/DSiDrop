@@ -1,0 +1,257 @@
+; German translation file.  Version 2.7
+; Translated by Albert August 16th, 2006 Updated by N00bert April 14th and May 9th, 2007
+
+[Errors]
+NoVCard=Keine vCard Dateien gefunden...
+NoFAT=Sie benutzen keine Karte, die mit Chishms FAT-Library kompatibel ist. Bitte benutzen Sie das Programm mit einem GAMP oder einer anderen kompatiblen Karte!
+CreateDir=Das Verzeichnis 'DSOrganize' konnte nicht gefunden werden! Es wurde für Sie mit den Standard-Einstellungen erstellt.
+Resource=Das Verzeichnis 'Resource' ist unvollständig. Einige Features, wie die Homebrew-Datenbank und das Starten von Homebrew, werden nicht funktionieren und es werden einige Grafiken fehlen!
+NoFiles=Keine Dateien in diesem Verzeichnis...
+RenderError=Fehler beim Versuch, die Datei wiederzugeben.
+Preview=Keine Vorabansicht möglich, weil das Bild zu klein ist.
+NoToDo=Keine Arbeitsplan-Einträge gefunden...
+NoScribble=Keine Kritzel-Pad-Dateien gefunden...
+NoId3=Keine ID3 v1.1-Daten gefunden!
+NoDefaultBoot=Es gibt keinen eingebauten Bootlader für ihre Karte.  Bitte stellen sie den Bootlader im Optionsmenü ein.
+LaunchChishm=Versuche ihre Datei mit dem Chrishm-Lader zu öffnen.
+NoDLDI=Sie haben DSOrganize nicht mit DLDI gepatcht.  Der Chrishm-Lader benötigt ein mit DLDI gepatchtes DSOrganize oder eine dldi-Datei in ihrem Ressourcen Verzeichnis.
+Auto Patch=Versuche mit DLDI zu patchen.
+
+[Dates]
+Sunday=Sonntag
+Monday=Montag
+Tuesday=Dienstag
+Wednesday=Mittwoch
+Thursday=Donnerstag
+Friday=Freitag
+Saturday=Samstag
+
+January=Januar
+February=Februar
+March=März
+April=April
+May=Mai
+June=Juni
+July=Juli
+August=August
+September=September
+October=Oktober
+November=November
+December=Dezember
+
+AM=AM
+PM=PM
+
+[Address]
+FirstName=Vorname
+LastName=Nachname
+Nickname=Spitzname
+HomePhone=Privat
+WorkPhone=Arbeit
+CellPhone=Mobil
+Address=Adresse
+City=Stadt
+State=Land
+Zip=Postleitzahl
+EMail=E-Mail
+Comment=Kommentare
+
+[Navigation]
+Home=Startseite
+Welcome=Willkommen
+Previous=Zurück
+Next=Weiter
+Reminder=Erinnerung
+EditReminder=Erinnerung bearb.
+ViewDay=Tag anzeigen
+DayView=Tagesplaner
+Save=Speichern
+Back=Zurück
+EditSelected=Bearbeiten
+Calendar=Kalender
+Create=Anlegen
+PreviousField=Feld zurück
+NextField=Feld vor
+Configuration=Einstellungen
+AddressBook=Adressbuch
+Language=Sprache
+StartScreen=Startbildschirm
+TimeFormat=Zeitformat
+NameFormat=Namensformat
+First=Vorn.
+Last=Nachn.
+Unknown=Unbekannt
+Browser=Dateimanager
+Open=Öffnen
+Launch=Starten
+PrevDay=Tag zurück
+NextDay=Tag vor
+Up=Hinauf
+NewFile=Neue Datei
+Delete=Löschen
+Rename=Umbenennen
+Copy=Kopieren
+Paste=Einfügen
+More=Mehr
+Confirm=Bestätigen
+Filename=Dateiname
+Calculator=Taschenrechner
+Yes=Ja
+No=Nein
+ShowHidden=Versteckte Dateien zeigen
+Memory=Speicher
+Edit=Bearbeiten
+PageUp=Seite hinauf
+PageDown=Seite hinunter
+Working=Funktioniert
+ChoosePal=Pal.-Datei auswählen
+Reset=Reset
+ToDo=Arbeitsplan
+Title=Titel
+ScribblePad=Kritzel-Pad
+SaveFormat=Speicherformat
+Pause=Pause
+Play=Abspielen
+SoundMode=Wiedergabemodus
+OneShot=Einzelne Datei
+Sequential=Aufeinanderfolgend
+NextFile=Nächste Datei
+PrevFile=Vorige Datei
+RandFile=Zufällig
+Hold=Anhalten
+DataBase=Homebrew-Datenbank
+View=Datei ansehen
+Hide=Verstecken ein/aus
+Done=Fertig
+Cancel=Abbrechen
+Date=Datum
+Version=Version
+Size=Größe
+HTMLMode=HTML-Anzeigemodus
+SecondClick=Aktion bei zweitem Klick
+DateFormat=Datumsformat
+TextOnly=Nur Text
+Extended=Erweitert
+NameSort=Nach Name
+DateSort=Nach Datum
+Swap=Vertauschen
+Record=Aufnehmen
+RecordMode=Aufnahmemodus
+Playback=Wiedergabe
+Length=Länge
+Stop=Stop
+IRC=IRC
+Send=Senden
+Disconnect=Verbindung abbr.
+Reconnect=Neu verbinden
+LaunchAlt=Alternative starten
+MKDir=Neues Verzeichnis
+Cut=Ausschneiden
+DefaultHomebrew=Standardverzeichnis für Homebrew
+Proxy=HTTP-Proxy
+Drag=Ziehen Sie die Icons mit dem Stylus, um das Bildschirmlayout nach Ihren Wünschen zu ändern.
+AutoConnect=Automatisch mit IRC-Server verbinden.
+IRCNickname=IRC-Nick
+IRCServer=IRC-Server
+IRCAltNick=Alternativer IRC-Nick
+None=Keiner
+SwapAB=Tausche A/B Knöpfe
+NormalBoot=Standard Bootmethode
+AltBoot=Alternative Bootmethode
+AutoBullet=Autom. Gilederungspunkte
+Volume=Lautstärke
+NewDir=Neues Verzeichnis
+IconSet=Icon Set
+SettingDescription=Beschreibung
+LoadPicture=Lade Bild...
+Continue=Fortsetzen
+Rendering=Rendern...
+ToChange=Wechseln
+Game=Spiel
+Go=Los
+WebBrowser=Webbrowser
+Forward=Vorwärts
+
+[Regional]
+Numbers=1234567890ß@
+Symbols=!"§$%&/()=?+
+Lowercase=qwertzuiopasdfghjklyxcvbnm,.-;'[]
+Uppercase=QWERTZUIOPASDFGHJKLYXCVBNM<>_:~{}
+Special1=àáâãäåèéêëìíîïñòóôõöùúûüý   ðþ æç
+Special2=ÀÁÂÃÄÅÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ   ÐÞßÆÇ
+
+[Browser]
+FileSize=Dateigröße
+FileType=Dateityp
+NDSFile=Nintendo DS-Datei
+TXTFile=Textdatei
+VCFFile=vCard-Datei
+DPLFile=Tagesplaner-Datei
+REMFile=Erinnerungsdatei
+PicFile=Bild
+Directory=Verzeichnis
+Unknown=Unbekanntes Format
+BINFile=Raw Mode 5 Daten
+ToDoFile=ToDo- (Arbeitsplan-) Datei
+SoundFile=Audio-Datei
+PlayListFile=Playlist
+HBFile=Eigene Datenbankdatei
+PKGFile=Eigene Paketdatei
+PluginFile=Plugin
+ExeFile=DSOrganize Executable
+ShortcutFile=DSOrganize Verknüpfung
+
+[Id3]
+Title=Titel
+Artist=Künstler
+Album=Album
+Genre=Genre
+Comment=Kommentar
+Year=Jahr
+Track=Track Nr.
+
+[Streaming]
+Buffer=Puffer
+Status=Status
+NotConnected=Nicht verbunden.
+Associating=Verknüpfe...
+Connecting=Verbinde mit Stream...
+ErrorConnecting=Verbindungsfehler!
+Streaming=Stream läuft!
+Buffering=Stream wird gepuffert...
+Playing=Abspielen
+
+[Database]
+ChangedDirectory=Gewechselt zu Verzeichnis
+AlreadyExists=existiert bereits
+CreatedDirectory=Verzeichnis angelegt
+StartedDownload=Download gestartet von
+ConnectingHost=Verbinde mit Host...
+Deleted=Gelöscht
+MOTD=Nachricht des Tages
+Description=Beschreibung
+Retrieving=Lade...
+ErrorRetrieving=Fehler beim Laden.
+GettingPackage=Beziehe Package-Info.
+FailedPackage=Kann Package-Inhalt nicht laden.
+Connecting=Verbinde...
+GetMOTD=Beziehe Nachricht des Tages...
+GetList=Beziehe Liste...
+Download=Download
+NoDBEntries=Keine Einträge in der Datenbank!
+Refresh=Liste auffrischen
+Input=Warte auf Eingabe
+
+[IRC]
+Disconnected=Keine Verbindung zum Server.
+Connecting=Verbinde mit
+HelpAvailable=Tippen sie /help für verfügbare Befehle!
+Connected=Verbunden mit Hotspot!
+FailedConnect=Verbindung fehlgeschlagen.
+CancelledConnect=Verbindung abgebrochen.
+CannotConnect=Konnte nicht mit dem Server verbinden!
+ServerClosed=Der Server hat die Verbindung abgebrochen.
+On=an
+Limit=Limit
+Key=Code
+ConversationWith=Gespräch mit

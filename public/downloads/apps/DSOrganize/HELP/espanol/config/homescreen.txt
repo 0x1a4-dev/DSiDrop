@@ -1,0 +1,1 @@
+Este ajuste te permite cambiar el orden de las aplicaciones en DSOrganize.  Solo arrastra el icono con el lápiz hasta el lugar en el que prefieres que esté.

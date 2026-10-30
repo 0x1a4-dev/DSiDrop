@@ -1,0 +1,1 @@
+Ta opcja mowi o tym, czy pliki ukryte maja, lub nie, byc widoczne w Przegladarce plikow.  Jezeli opcja jest wlaczona, DSOrganize umozliwi Ci rowniez ukrywanie i przywracanie poprzedniego stanu widocznosci plikow.

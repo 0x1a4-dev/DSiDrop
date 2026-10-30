@@ -1,0 +1,1 @@
+Este ajuste ordena a DSOrganize usar la fuente pequeña por defecto o una fuente con el ancho ajustado para el cliente IRC

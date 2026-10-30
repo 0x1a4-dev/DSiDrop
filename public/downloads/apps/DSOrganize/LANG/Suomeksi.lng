@@ -1,0 +1,149 @@
+; DSOrganize Version 1.9 Final
+; Suomenkielinen käännös: Xtreme (Samtron-Translations) 2006/05/27 rev4
+
+[Errors]
+NoVCard=vCard-tiedostoja ei löydy...
+NoFAT=Käyttämäsi media ei ole Chishm'n FAT kirjaston kanssa yhteensopiva.  Käynnistä tämä ohjelma GBAMP, tai yhteensopivalta medialta!
+CreateDir='DSOrganize' kansiota ei löytynyt! Kansio luotiin ja oletusasetukset otettiin käyttöön.
+NoFiles=Tässä kansiossa ei ole tiedostoja...
+RenderError=Tapahtui virhe tiedoston käsittelyssä.	
+Preview=Esikatselutila ei ole käytössä, koska kuva on liian pienikokoinen.
+NoToDo=Tekemättömiä tehtäviä ei löydy...
+NoScribble=Piirroksia ei löydy...
+NoId3=ID3 v1.1 tietoja ei ole!
+
+[Dates]
+Sunday=Sunnuntai
+Monday=Maanantai
+Tuesday=Tiistai
+Wednesday=Keskiviikko
+Thursday=Torstai
+Friday=Perjantai
+Saturday=Lauantai
+	
+January=Tammikuu
+February=Helmikuu
+March=Maaliskuu
+April=Huhtikuu
+May=Toukokuu
+June=Kesäkuu
+July=Heinäkuu
+August=Elokuu
+September=Syyskuu
+October=Lokakuu
+November=Marraskuu
+December=Joulukuu
+
+AM=AM
+PM=PM
+
+[Address]
+FirstName=Etunimi
+LastName=Sukunimi
+Nickname=Kutsumanimi
+HomePhone=Kotipuhelin
+CellPhone=Matkapuhelin
+Address=Osoite
+City=Kaupunki
+State=Osavalt.
+Zip=Postinumero
+EMail=Sähköpostiosoite
+Comment=Lisätiedot
+
+[Navigation]
+Home=Kotiruutu
+Welcome=Tervetuloa
+Previous=Edellinen
+Next=Seuraava
+EditReminder=Muokkaa
+ViewDay=Selaa päivää
+DayView=Tehtävälista
+Save=Tallenna
+Back=Takaisin
+EditSelected=Muokkaa valittua
+Calendar=Kalenteri
+Create=Uusi
+PreviousField=Edellinen alue
+NextField=Seuraava alue
+Configuration=Asetukset
+AddressBook=Osoitekirja
+Language=Kieli
+StartScreen=Aloitusruutu
+TimeFormat=Ajan näyttö
+NameFormat=Nimen tyyppi
+First=Ensimm.
+Last=Viim.
+Unknown=Tuntematon
+Browser=Selain
+Open=Avaa
+Launch=Suorita
+PrevDay=Edellinen
+NextDay=Seuraava
+Up=Ylös
+NewFile=Uusi tiedosto
+Delete=Poista
+Rename=Nimeä uudelleen
+Copy=Kopioi
+Paste=Liitä
+More=Lisää
+Confirm=Hyväksy
+Filename=Tiedostonimi
+Calculator=Laskin
+Yes=Kyllä
+No=Ei
+ShowHidden=Näytä piilotiedostot
+Memory=Muisti
+Edit=Muokkaa
+PageUp=Sivu ylös
+PageDown=Sivu alas
+Working=Käsittelee
+ChoosePal=Valitse värikartta-tiedosto
+Reset=Palauta arvot
+ToDo=Tehtävälista
+Title=Otsikko
+ScribblePad=Piirroslehtiö
+SaveFormat=Piirroksien tallennusmuoto
+Pause=Tauko
+Play=Toista
+SoundMode=Toistotapa
+OneShot=Yksi tiedosto
+Sequential=Järjestyksessä
+NextFile=Seuraava
+PrevFile=Edellinen
+RandFile=Sekajärjestyksessä
+Hold=Pidä
+DataBase=Kotitekoisten tietokanta
+View=Selaa tiedostoa
+Hide=Piilota
+
+[Regional]
+Numbers=1234567890-=
+Symbols=!@#$%^&*()_+
+Lowercase=qwertyuiopåasdfghjklöäzxcvbnm,./;'[]
+Uppercase=QWERTYUIOPÅASDFGHJKLÖÄZXCVBNM<>?:~{}
+Special1=àáâãäåèéêëìíîïñòóôõöùúûüı   ğş æç
+Special2=ÀÁÂÃÄÅÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜİ   ĞŞßÆÇ
+
+[Browser]
+FileSize=Tiedostokoko
+FileType=Tiedostotyyppi
+NDSFile=Nintendo DS tiedosto
+TXTFile=Tekstitiedosto
+VCFFile=vCard-tiedosto
+DPLFile=Tehtävälista-tiedosto
+REMFile=Muistuttaja-tiedosto
+PicFile=Kuvatiedosto
+Directory=Kansio
+Unknown=Tuntematon tyyppi
+BINFile=RAW Mode 5-tiedosto
+TodoFile=Tehtävälista-tiedosto
+SoundFile=Äänitiedosto
+
+[Id3]
+Title=Nimike
+Artist=Esittäjä
+Album=Albumi
+Genre=Tyylilaji
+Comment=Lisätiedot
+Year=Vuosi
+Track=Raita

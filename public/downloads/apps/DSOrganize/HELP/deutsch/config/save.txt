@@ -1,0 +1,1 @@
+Mit dieser Option können Sie das Dateiformat wählen, welches das Kritzel-Pad benutzt. Sollten sie png-Dateien öffnen können, empfehle ich ihnen dieses Format, da es viel weniger Speicherplatz benötigt.

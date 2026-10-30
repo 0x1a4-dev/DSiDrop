@@ -1,15 +1,19 @@
 import { createReadStream, createWriteStream } from "node:fs";
 import { createHash } from "node:crypto";
-import { mkdir, readFile, rename, rm, stat } from "node:fs/promises";
+import { mkdir, open, readFile, rename, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { unstable_rethrow } from "next/navigation";
 import type { Dataset, Rom } from "../types";
 import { downloadUrl, normalizeQuery } from "../roms";
+import { mediaInfo } from "../media";
 import { ROMS_DIR, systemDir } from "./rom-file";
 import { extractZip, safeFileName } from "./zip";
-import { getUploadedFile, uploadedDataset, UploadError } from "./uploads";
+import { getUploadedFile, uploadedDataset, UploadError, validateHeader } from "./uploads";
+import { findTheme, themeCatalog, themeFavorites } from "./themes";
+import { prepareTheme } from "./theme-package";
+import { THEME_STYLES, type MenuTheme } from "../theme-types";
 
 export const DSI_PAGE_SIZE = 10;
 const CACHE_DIR = path.join(ROMS_DIR, ".dsi-cache");
@@ -84,10 +88,24 @@ export async function ndsDataset(system: DsiSystem = "nds"): Promise<Dataset> {
 }
 
 export async function catalog(params: URLSearchParams): Promise<string> {
-  const { roms } = await ndsDataset(dsiSystem(params.get("system")));
+  const system = dsiSystem(params.get("system"));
+  if (system === "others" && params.get("type") === "Themes") {
+    const favorites = new Set(await themeFavorites());
+    const query = normalizeQuery(params.get("q") || "");
+    const themes = (await themeCatalog()).filter((theme) => (!params.get("style") || theme.style === params.get("style"))
+      && (params.get("favorites") !== "1" || favorites.has(theme.id))
+      && query.split(/\s+/).every((word) => normalizeQuery(`${theme.title} ${theme.author}`).includes(word)));
+    const pages = Math.max(1, Math.ceil(themes.length / DSI_PAGE_SIZE));
+    const page = Math.max(0, Math.min(pages - 1, Number(params.get("page")) || 0));
+    return [`RFCATALOG1\t${themes.length}\t${page}\t${pages}`, ...themes.slice(page * DSI_PAGE_SIZE, (page + 1) * DSI_PAGE_SIZE)
+      .map((theme) => [theme.id, ascii(theme.title, 90), ascii(THEME_STYLES[theme.style], 24), 0, favorites.has(theme.id) ? "Themes*" : "Themes"].join("\t")), ""].join("\n");
+  }
+  const { roms } = await ndsDataset(system);
   const query = normalizeQuery(params.get("q")?.slice(0, 80) ?? "");
   const region = (params.get("region") ?? "").toLowerCase();
+  const type = system === "others" ? params.get("type") ?? "" : "";
   const filtered = roms.filter((rom) => {
+    if (type && !rom.g?.includes(type)) return false;
     const regions = [rom.r, ...(rom.a ?? [])].map((r) => r.toLowerCase());
     if (region && !regions.includes(region)) return false;
     const index = normalizeQuery(`${rom.t} ${rom.n} ${rom.r} ${rom.l ?? ""}`);
@@ -109,8 +127,16 @@ export function validateId(id: string | null, system: DsiSystem): asserts id is 
 export async function lookup(id: string, system: DsiSystem): Promise<{ rom: Rom; data: Dataset }> {
   const data = await ndsDataset(system);
   const rom = data.roms.find((r) => r.m === id);
+  if (!rom && system === "others") {
+    const theme = await findTheme(id);
+    if (theme) return { rom: themeRom(theme), data };
+  }
   if (!rom) throw new DsiError(`Game not found in the ${system.toUpperCase()} catalog`, 404);
   return { rom, data };
+}
+
+export function themeRom(theme: MenuTheme): Rom {
+  return { m: theme.id, n: theme.title, t: theme.title, r: THEME_STYLES[theme.style], l: "Themes", g: ["Themes"], s: 0, c: null };
 }
 
 export function statusLine(job: DsiJob): string {
@@ -124,9 +150,9 @@ const crcTable = Array.from({ length: 256 }, (_, index) => {
   return c >>> 0;
 });
 
-async function inspectRom(file: string): Promise<{ size: number; crc: string }> {
+async function inspectRom(file: string, minimumSize = 512): Promise<{ size: number; crc: string }> {
   const { size } = await stat(file);
-  if (size < 512 || size > MAX_ROM_SIZE) throw new DsiError("Invalid ROM file size", 502);
+  if (size < minimumSize || size > MAX_ROM_SIZE) throw new DsiError("Invalid file size", 502);
   let crc = 0xffffffff;
   for await (const chunk of createReadStream(file)) {
     for (const byte of chunk as Buffer) crc = (crc >>> 8) ^ crcTable[(crc ^ byte) & 255];
@@ -137,8 +163,18 @@ async function inspectRom(file: string): Promise<{ size: number; crc: string }> 
 async function prepareJob(job: DsiJob): Promise<void> {
   const { rom, data } = await lookup(job.id, job.system);
   if (job.system === "others") {
+    if (rom.g?.includes("Themes")) {
+      const theme = await findTheme(job.id);
+      if (!theme) throw new DsiError("Theme not found", 404);
+      job.state = "extracting";
+      job.message = "PC is preparing theme assets";
+      const file = await prepareTheme(theme);
+      const info = await inspectRom(file);
+      Object.assign(job, info, { file, state: "ready", message: "Ready to install in TWiLight Menu++" });
+      return;
+    }
     const local = await getUploadedFile(job.id);
-    const info = await inspectRom(local.file);
+    const info = await inspectRom(local.file, local.folder || mediaInfo(local.name) ? 1 : 512);
     Object.assign(job, info, { file: local.file, state: "ready", message: "Ready to download to SD" });
     return;
   }
@@ -206,7 +242,7 @@ export async function prepare(id: string | null, requestedSystem?: string | null
   const existing = store.jobs.get(key);
   if (existing && existing.state !== "error") return existing;
   if (store.active) throw new DsiError("PC is preparing another game. Please try again shortly.", 409);
-  const extension = system === "gba" ? "gba" : "nds";
+  const extension = rom.folder ? "folder" : rom.media ? mediaInfo(rom.media)!.extension : rom.g?.includes("Themes") ? "theme" : system === "gba" ? "gba" : "nds";
   const name = `${ascii(rom.n, 100).replace(/[<>:"/\\|?*]/g, "_").replace(/^[. ]+|[. ]+$/g, "") || "Game"} [${id.slice(0, 8)}].${extension}`;
   const job: DsiJob = { id, system, state: "checking", received: 0, total: 0, size: 0, crc: "", name, message: "PC is checking for an existing file" };
   store.jobs.set(key, job);
@@ -223,7 +259,7 @@ export async function getJob(id: string | null, requestedSystem?: string | null)
   const system = dsiSystem(requestedSystem);
   validateId(id, system);
   if (system === "others") {
-    try { await getUploadedFile(id); }
+    try { if (!store.jobs.get(`${system}:${id}`)?.name.endsWith(".theme")) await getUploadedFile(id); }
     catch (error) {
       if (error instanceof UploadError) throw new DsiError(error.message, error.status);
       throw error;
@@ -248,6 +284,39 @@ export function byteRange(header: string | null, size: number): { start: number;
 export async function gameFile(request: Request, head = false): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const job = await getJob(params.get("id"), params.get("system"));
+  return preparedFile(request, job, head);
+}
+
+export async function appUpdate(request: Request, head = false): Promise<Response> {
+  const file = path.join(process.cwd(), "public", "downloads", "DSiDrop.nds");
+  let input;
+  try { input = await open(file, "r"); }
+  catch { throw new DsiError("DSiDrop update is not available on the PC server.", 503); }
+  try {
+    const header = Buffer.alloc(512);
+    const { bytesRead } = await input.read(header, 0, header.length, 0);
+    const info = await input.stat();
+    validateHeader(header.subarray(0, bytesRead), info.size);
+    if (header.subarray(0, 12).toString("ascii").replace(/\0/g, "").trim() !== "DSiDrop")
+      throw new DsiError("The update file is not a DSiDrop application.", 502);
+  } catch (error) {
+    if (error instanceof UploadError) throw new DsiError("The DSiDrop update has an invalid NDS header.", 502);
+    throw error;
+  } finally { await input.close(); }
+  const info = await inspectRom(file);
+  const job: DsiJob = { id: "self-update", system: "nds", state: "ready", file, ...info,
+    received: info.size, total: info.size, name: "DSiDrop.nds", message: "DSiDrop server build" };
+  const params = new URL(request.url).searchParams;
+  if (params.get("file") !== "1") {
+    const response = dsiText(statusLine(job));
+    return head ? new Response(null, { headers: response.headers }) : response;
+  }
+  if (params.get("crc") !== job.crc || params.get("size") !== String(job.size))
+    throw new DsiError("The PC update changed. Check for updates again.", 409);
+  return preparedFile(request, job, head);
+}
+
+async function preparedFile(request: Request, job: DsiJob, head: boolean): Promise<Response> {
   if (job.state !== "ready" || !job.file) throw new DsiError("Game is not ready yet", 409);
   const { size } = await stat(job.file);
   if (size !== job.size) throw new DsiError("PC file changed. Restart the PC server.", 409);

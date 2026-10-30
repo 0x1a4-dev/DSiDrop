@@ -1,0 +1,259 @@
+; Started with bLAStY and dsboi's v1.2.
+; Updated by MrSnowflake (MrSnowflake.be) v1.72 V1.8 V1.9 v2.0
+; Now updated by Papayo v2.7
+; Version 2.7
+
+[Errors]
+NoVCard=Geen vCard bestanden gevonden...
+NoFAT=Uw CF kaart is niet compatibel met Chishm's FAT library. Dit programma werkt alleen met een compatible kaart!
+CreateDir=De 'DSOrganize' directory is niet gevonden! Het zal nu gecreÎerd worden met de standaard instellingen.
+Resource=De 'resource' directory is niet compleet.  Sommige functies zoals de Homebrew Database en homebrew starten werken mogelijk niet en er kunnen graphics ontbreken!
+NoFiles=Geen bestanden in deze directory...
+RenderError=Er is een fout opgetreden tijdens het renderen van het bestand.
+Preview=Preview modus niet beschikbaar, afbeelding te klein.
+NoToDo=Geen todo items gevonden...
+NoScribble=Geen scribble creaties gevonden...
+NoId3=Geen ID3 v1.1 data gevonden!
+NoDefaultBoot=Er is geen ingebouwde bootloader voor uw kaart.  Configureer alstublieft een standaard Bootloader in het configuratie scherm.
+LaunchChishm=Uw bestand wordt gestart met de Chishm Bootloader..
+NoDLDI=U heeft DSOrganize niet gepatched met een DLDI bestand.  De Chishm loader heeft een DLDI gepatched DSOrganize, of een DLDI bestand in uw resources directory nodig.
+AutoPatch=Bestand wordt gepatched met DLDI.
+
+[Dates]
+Sunday=Zondag
+Monday=Maandag
+Tuesday=Dinsdag
+Wednesday=Woensdag
+Thursday=Donderdag
+Friday=Vrijdag
+Saturday=Zaterdag
+
+January=Januari
+February=Februari
+March=Maart
+April=April
+May=Mei
+June=Juni
+July=Juli
+August=Augustus
+September=September
+October=Oktober
+November=November
+December=December
+
+AM=AM
+PM=PM
+
+[Address]
+FirstName=Voornaam
+LastName=Achternaam
+Nickname=Bijnaam
+HomePhone=Telefoon Thuis
+Workphone=Telefoon Werk
+CellPhone=Telefoon 06
+Address=Adres
+City=Stad
+State=Provincie
+Zip=Postcode
+EMail=E-Mail
+Comment=Commentaar
+
+[Navigation]
+Home=Begin Scherm
+Welcome=Welkom
+Previous=Vorige
+Next=Volgende
+Reminder=Herinnering
+EditReminder=Wijzig Herinnering
+ViewDay=Bekijk Dag
+DayView=Dagplanner
+Save=Bewaren
+Back=Terug
+EditSelected=Selectie Bewerken
+Calendar=Kalender
+Create=Aanmaken
+PreviousField=Vorige Veld
+NextField=Volgende Veld
+Configuration=Configureer
+AddressBook=Adresboek
+Language=Taal
+StartScreen=Opstart Scherm
+TimeFormat=Tijd Formaat
+NameFormat=Naam Formaat
+First=Eerste
+Last=Laatste
+Unknown=Onbekend
+Browser=Browser
+Open=Open
+Launch=Start
+PrevDay=Vorige Dag
+NextDay=Volgende Dag
+Up=Omhoog
+NewFile=Nieuw Bestand
+Delete=Verwijder
+Rename=Hernoem
+Copy=KopiÎren
+Paste=Plakken
+More=Meer
+Confirm=Bevestigen
+Filename=Bestandsnaam
+Calculator=Rekenmachine
+Yes=Ja
+No=Nee
+ShowHidden=Laat Verborgen Bestanden Zien
+Memory=Geheugen
+Edit=Aanpassen
+PageUp=Pagina Omhoog
+PageDown=Pagina Omlaag
+Working=Bezig
+ChoosePal=Kies Pallet Bestand
+Reset=Reset
+ToDo=Tedoen Lijst
+Title=Titel
+ScribblePad=Scribble Blok
+SaveFormat=Scribble Bewaar Formaat
+Pause=Pauze
+Play=Afspelen
+SoundMode=Afspeel Modi
+OneShot=Enkel Bestand
+Sequential=Sequentieel
+NextFile=Volgend Bestand
+PrevFile=Vorig Bestand
+RandFile=Willekeurig
+Hold=Hold
+DataBase=Homebrew Database
+View=Bekijk Bestand
+Hide=Wissel Verborgen
+Done=Klaar
+Cancel=Annuleer
+Date=Datum
+Version=Versie
+Size=Grootte
+HTMLMode=HTML Renderen Modus
+SecondClick=Actie Bij Tweede Klik
+DateFormat=Datum Volgorde
+TextOnly=Alleen Tekst
+Extended=Uitgebreid
+NameSort=Sorteer Volgens Naam
+DateSort=Sorteer Volgens Datum
+Swap=Wissel
+Record=Opnemen
+RecordMode=Opneem Modus
+Playback=Playback
+Length=Lengte
+Stop=Stop
+IRC=IRC
+Send=Versturen
+Disconnect=Verbinding Verbreken
+Reconnect=Opnieuw Verbinden
+LaunchAlt=Alternatieve Launch
+MKDir=Nieuwe Dir
+Cut=Knippen
+DefaultHomebrew=Standaard Homebrew Directory
+Proxy=HTTP Proxy
+Drag=Sleep de iconen met uw stylus, om de volgorde van het home screen te verranderen.
+AutoConnect=Automatisch Verbinden Met IRC Server
+IRCNickname=IRC Bijnaam
+IRCServer=IRC Server
+IRCAltNick=IRC Alternatieve Bijnaam
+None=Geen
+SwapAB=Wissel A/B Knoppen
+NormalBoot=Standaard Boot Methode
+AltBoot=Alternatieve Boot Methode
+AutoBullet=Automatische Bullets in Todo
+Volume=Volume
+NewDir=Nieuwe Directory
+IconSet=Iconen Set
+SettingDescription=Instelling Uitleg
+LoadPicture=Afbeelding laden...
+Continue=Doorgaan
+Rendering=Renderen...
+ToChange=Veranderen
+Game=Spel
+Go=Start
+WebBrowser=Internet Browser
+Forward=Vooruit
+	
+[Regional]
+Numbers=1234567890-=
+Symbols=!@#$%^&*()_+
+Lowercase=qwertyuiopasdfghjklzxcvbnm,./;'[]
+Uppercase=QWERTYUIOPASDFGHJKLZXCVBNM<>?:"{}
+Special1=‡·‚„‰ÂËÈÍÎÏÌÓÔÒÚÛÙıˆ˘˙˚¸˝ ˛~ÊÁ
+Special2=¿¡¬√ƒ≈»… ÀÃÕŒœ—“”‘’÷Ÿ⁄€‹› –ﬁﬂ∆«
+
+[Browser]
+FileSize=Bestands Grootte
+FileType=Bestands Type
+NDSFile=Nintendo DS Bestand
+TXTFile=Tekst Bestand
+VCFFile=vCard Bestand
+DPLFile=Dagplanner Bestand
+REMFile=Herinnering Bestand
+PicFile=Afbeelding
+Directory=Directory
+Unknown=Onbekend Formaat
+BINFile=Raw Mode 5 Data
+TodoFile=Todo Bestand
+SoundFile=Geluids Bestand
+PlayListFile=Afspeellijst
+HBFile=Eigen Database Bestand
+PKGFile=Eigen Package Bestand
+PluginFile=Extensie
+ExeFile=DSOrganize Bestand
+ShortcutFile=DSOrganize Shortcut
+
+[Id3]
+Title=Titel
+Artist=Artiest
+Album=Album
+Genre=Genre
+Comment=Commentaar
+Year=Jaar
+Track=Track Nr
+
+[Streaming]
+Buffer=Buffer
+Status=Status
+NotConnected=Niet Verbonden.
+Associating=AssociÎren...
+Connecting=Verbinden met stream...
+ErrorConnecting=Er is een fout opgetreden tijden het verbinden!
+Streaming=Streaming!
+Buffering=Bufferen stream...
+Playing=Afspelen
+
+[Database]
+ChangedDirectory=Andere directory
+AlreadyExists=bestaat al
+CreatedDirectory=GecreÎerde directory
+StartedDownload=Download gestart van
+ConnectingHost=Verbinden met host...
+Deleted=Verwijdert
+MOTD=MOTD
+Description=Uitleg
+Retrieving=Ophalen...
+ErrorRetrieving=Niet mogelijk om op te halen.
+GettingPackage=Verkrijgen package informatie.
+FailedPackage=Package inhoud downloaden mislukt.
+Connecting=Verinden...
+GetMOTD=MOTD Verkrijgen...
+GetList=Lijst ophalen...
+Download=Download
+NoDBEntries=Geen database entries!
+Refresh=Vernieuw Lijst
+Input=Wachten op input
+
+[IRC]
+Disconnected=Verbinding verbroken met server.
+Connecting=Verbinden met
+HelpAvailable=Type /help voor commandos!
+Connected=Verbonden met hotspot!
+FailedConnect=Verbinden mislukt.
+CancelledConnect=Verbinding geannuleerd.
+CannotConnect=Niet mogelijk om verbinding te maken met de server!
+ServerClosed=Server gesloten verbinding.
+On=Aan
+Limit=Limiet
+Key=Toets
+ConversationWith=Conversatie met

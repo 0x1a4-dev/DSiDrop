@@ -1,0 +1,1 @@
+This setting allows you to rearrange the order of the applications in DSOrganize.  Simply drag the icon with your stylus to the location you would prefer it to be.

@@ -1,0 +1,1 @@
+Este ajuste te permite escoger el formato en que la Pizarra guardará los dibujos.  A menos que no puedas leer archivos png, recomiendo que uses el formato png ya que los dibujos ocuparán menos espacio en tu tarjeta.

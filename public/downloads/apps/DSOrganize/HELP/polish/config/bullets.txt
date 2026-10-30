@@ -1,0 +1,1 @@
+Kiedy opcja jest wlaczona po nacisnieciu enter w Terminarzu pojawi sie mozliwosc wpisania od razu kolejnej linii.

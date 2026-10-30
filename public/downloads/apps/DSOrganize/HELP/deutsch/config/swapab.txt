@@ -1,0 +1,1 @@
+Diese Option wurde für alle eingebaut, die den B-Knopf als Hauptaktionstaste benutzen wollen. Falls aktiviert, werden die Funktionen der A und B Taste in DSOrganize getauscht.

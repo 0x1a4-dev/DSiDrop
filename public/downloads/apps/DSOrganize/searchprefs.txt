@@ -1,0 +1,5 @@
+g http://www.google.com/search?q=
+y http://search.yahoo.com/search?p=
+m http://search.msn.com/results.aspx?q=
+a http://search.aol.com/aolcom/search?query=
+k http://www.ask.com/web?q=

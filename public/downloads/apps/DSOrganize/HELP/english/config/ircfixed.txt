@@ -1,0 +1,1 @@
+This setting tells DSOrganize whether to use the default small font or a fixed width font for the IRC client

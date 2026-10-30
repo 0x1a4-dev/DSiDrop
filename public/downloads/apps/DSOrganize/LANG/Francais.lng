@@ -1,0 +1,256 @@
+; Traduction française par Adrilo le 8 Mai 2007
+; Version 2.7
+
+[Errors]
+NoVCard=Il n'y a pas de fichier vCard disponible...
+NoFAT=Vous utilisez une carte qui n'est pas compatible avec la bibliothèque FAT de Chishm.  Veuillez lancer ce programme avec un GBAMP ou tout autre linker compatible.
+CreateDir=Le dossier 'DSOrganize' n'a pas été trouvé !  Il a été créé pour vous avec les réglages par défaut.
+Resource=Le dossier 'resources' est incomplet.  Certaines fonctions comme la base de données Homebrews et le démarrage d'homebrews ne fonctionneront pas ainsi que quelques graphismes !
+NoFiles=Pas de fichier dans ce répertoire...
+RenderError=Une erreur s'est produite lors du traitement des données
+Preview=Le mode 'Preview' n'est pas disponible car l'image est trop petite.
+NoToDo=Pas de fichier trouvé...
+NoScribble=Pas de notes disponibles...
+NoId3=Données ID3 v1.1 non disponibles
+NoDefaultBoot=There is no built in bootloader for your card.  Please configure the bootloaders in the configuration screen.
+LaunchChishm=Tente de lancer votre fichier avec le loader de Chishm
+NoDLDI=Vous n'avez patché DSOrganize avec aucun DLDI. Le loader de Chishm requiert que vous ayez patché votre version de DSOrganize avec un fichier DLDI.
+AutoPatch=En attente de patch avec DLDI
+
+[Dates]
+Sunday=Dimanche
+Monday=Lundi
+Tuesday=Mardi
+Wednesday=Mercredi
+Thursday=Jeudi
+Friday=Vendredi
+Saturday=Samedi
+
+January=Janvier
+February=Février
+March=Mars
+April=Avril
+May=Mai
+June=Juin
+July=Juillet
+August=Août
+September=Septembre
+October=Octobre
+November=Novembre
+December=Décembre
+
+AM=du matin
+PM=de l'après-midi
+
+[Address]
+FirstName=Prénom
+LastName=Nom
+Nickname=Surnom
+HomePhone=Téléphone domicile
+WorkPhone=Téléphone travail
+CellPhone=Téléphone portable
+Address=Adresse
+City=Ville
+State=Etat
+Zip=Code postal
+EMail=E-Mail
+Comment=Commentaires
+
+[Navigation]
+Home=Ecran d'accueil
+Welcome=Bienvenue
+Previous=Précédent
+Next=Suivant
+Reminder=Rappel
+EditReminder=Editer rappel
+ViewDay=Examiner jour
+DayView=Agenda
+Save=Sauvegarder
+Back=Retour
+EditSelected=Editer la sélection
+Calendar=Calendrier
+Create=Créer
+PreviousField=Champ préc.
+NextField=Champ suiv.
+Configuration=Configuration
+AddressBook=Carnet d'adresses
+Language=Langue
+StartScreen=Ecran de départ
+TimeFormat=Format de l'heure
+NameFormat=Format du nom
+First=Prénom
+Last=Nom
+Unknown=Inconnu
+Browser=Explorateur
+Open=Ouvrir
+Launch=Lancer
+PrevDay=Jour préc.
+NextDay=Jour suiv.
+Up=Haut
+NewFile=Nouveau fichier
+Delete=Supprimer
+Rename=Renommer
+Copy=Copier
+Paste=Coller
+More=Plus
+Confirm=Confirmer
+Filename=Nom du fichier
+Calculator=Calculatrice
+Yes=Oui
+No=Non
+ShowHidden=Montrer les fichiers cachés
+Memory=Mémoire
+Edit=Editer
+PageUp=Haut de la page
+PageDown=Bas de la page
+Working=Patientez...
+ChoosePal=Choisissez une palette
+Reset=Redémarrer
+ToDo=Liste Mémo
+Title=Titre
+ScribblePad=Bloc-notes
+SaveFormat=Format de sauvegarde
+Pause=Pause
+Play=Lecture
+SoundMode=Mode de lecture
+OneShot=Un seul
+Sequential=Séquentiel
+NextFile=Fichier suiv.
+PrevFile=Fichier préc.
+RandFile=Aléatoire
+Hold=Bloquer
+DataBase=Téléchargement de homebrews
+View=Voir le fichier
+Hide=Caché
+Done=Terminé
+Cancel=Annuler
+Date=Date
+Version=Version
+Size=Taille
+HTMLMode=Mode de rendu HTML
+SecondClick=Action sur le second clic
+DateFormat=Format de la date
+TextOnly=Texte uniquement
+Extended=Etendu
+NameSort=Par nom
+DateSort=Par date
+Swap=Echanger
+Record=Enregistrer
+RecordMode=Mode d'enregistrement
+Playback=Lecture
+Length=longueur
+Stop=Stop
+IRC=IRC
+Send=Envoyer
+Disconnect=Déconnecter
+Reconnect=Reconnecter
+LaunchAlt=Démarrer en méthode alternative
+MKDir=Nouveau Dossier
+Cut=Couper
+DefaultHomebrew=Répertoire des Homebrews par défaut
+Proxy=Proxy HTTP
+Drag=Déplacer les icônes avec votre stylet pour modifier l'écran d'accueil.
+AutoConnect=Auto-connexion au Serveur IRC
+IRCNickname=Pseudo IRC
+IRCServer=Serveur IRC
+IRCAltNick=Pseudo IRC Alternatif
+None=Rien
+SwapAB=Echanger les boutons A et B
+SwapBoot=Méthode de démarrage par défault
+AutoBullet=Boutons Auto dans la Liste Mémo
+Volume=Volume
+NewDir=Nouveau Dossier
+IconSet=Pack d'icônes
+SettingDescription=Description des paramètres
+LoadPicture=Chargement de l'image...
+Continue=Continuer
+Rendering=Affichage...
+ToChange=changer
+Game=Jeu
+Go=Go
+WebBrowser=Navigateur Web
+Forward=Suivant
+
+[Regional]
+Numbers=1234567890-=
+Symbols=!@#$%^&*()_+
+Lowercase=azertyuiopqsdfghjklmwxcvbn,./;'[]
+Uppercase=AZERTYUIOPQSDFGHJKLMWXCVBN<>?:"{}
+Special1=àáâãäåèéêëìíîïñòóôõöùúûüý   ðþ~æç
+Special2=ÀÁÂÃÄÅÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ   ÐÞßÆÇ
+
+[Browser]
+FileSize=Taille du fichier
+FileType=Type de fichier
+NDSFile=Fichier NDS
+TXTFile=Fichier texte
+VCFFile=Fichier vCard
+DPLFile=Fichier Agenda
+REMFile=Fichier rappel
+PicFile=Image
+Directory=Répertoire
+Unknown=Format inconnu
+BINFile=Raw Mode 5 Data
+TodoFile=Fichier Mémo
+SoundFile=Fichier Audio
+PlayListFile=Playliste
+HBFile=Fichier Base de Données Perso
+PKGFile=Fichier Package Perso
+PluginFile=Plugin
+ExeFile=Executable DSOrganize
+ShortcutFile=Raccourci DSOrganize
+
+[Id3]
+Title=Titre
+Artist=Artiste
+Album=Album
+Genre=Genre
+Comment=Commentaires
+Year=Année
+Track=Piste
+
+[Streaming]
+Buffer=Buffer
+Status=Statut
+NotConnected=Non connecté
+Associating=Association...
+Connecting=Connexion au stream...
+ErrorConnecting=Il y a eu une erreur de connexion
+Streaming=Streaming !
+Buffering=Buffering stream...
+Playing=En écoute
+
+[Database]
+ChangedDirectory=Répertoire changé
+AlreadyExists=existe déjà
+CreatedDirectory=Répertoire créé
+StartedDownload=Commencer le téléchargement depuis
+ConnectingHost=Connexion à l'hôte...
+Deleted=Supprimé
+MOTD=Message du jour
+Description=Description
+Retrieving=Recherche...
+ErrorRetrieving=Impossible de rechercher
+GettingPackage=Recherche des informations du package
+FailedPackage=Echec du téléchargement du contenu du package
+Connecting=Connexion...
+GetMOTD=Télécharge le message du jour...
+GetList=Télécharge la liste...
+Download=Télécharger
+NoDBEntries=Pas d'entrée dans la base de données
+Refresh=Rafraîchir la liste
+Input=En attente de l'entrée
+
+[IRC]
+Disconnected=Déconnecté du serveur.
+Connecting=Connexion à
+HelpAvailable=Tapez /help pour les commandes disponibles !
+Connected=Connecté à Internet!
+FailedConnect=Problème pour se connecter.
+CancelledConnect=Connexion annulée.
+CannotConnect=Impossible de se connecter au serveur !
+ServerClosed=Connexion fermée au Serveur.
+On=on
+Limit=Limite
+Key=Touche
+ConversationWith=Conversation avec

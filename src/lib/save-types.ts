@@ -1,0 +1,3 @@
+export type SaveBackup = { id: string; mac: string; path: string; size: number; crc: string; hash: string; createdAt: string; automatic: boolean; job: string };
+export type SaveTask = { id: string; mac: string; action: "backup" | "restore"; backup?: string; path?: string; sourceMac?: string; automatic: boolean; status: "queued" | "running" | "done" | "error"; message: string; createdAt: string };
+export type SaveSnapshot = { backups: SaveBackup[]; tasks: SaveTask[]; automatic: Record<string, boolean> };

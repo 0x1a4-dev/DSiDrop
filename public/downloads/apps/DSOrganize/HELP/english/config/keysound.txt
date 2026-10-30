@@ -1,0 +1,1 @@
+This setting changes whether or not the keyboard makes a clicking noise when you press a key.

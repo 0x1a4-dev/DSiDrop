@@ -11,6 +11,11 @@ static bool job(const char *text) {
 }
 
 int main(int argc, char **argv) {
+    uint64_t fingerprint = fileFingerprint("/roms/Game.nds", 1024, 123);
+    assert(fingerprint == fileFingerprint("/roms/Game.nds", 1024, 123));
+    assert(fingerprint != fileFingerprint("/roms/Renamed.nds", 1024, 123));
+    assert(fingerprint != fileFingerprint("/roms/Game.nds", 1025, 123));
+    assert(fingerprint != fileFingerprint("/roms/Game.nds", 1024, 124));
     assert((crcUpdate(0xffffffffU, "123456789", 9) ^ 0xffffffffU) == 0xcbf43926U);
     uint32_t crc = crcUpdate(0xffffffffU, "1234", 4);
     assert((crcUpdate(crc, "56789", 5) ^ 0xffffffffU) == 0xcbf43926U);
@@ -30,6 +35,21 @@ int main(int argc, char **argv) {
     assert(parseJobForSystem(uploadStatus, &gbaJob, SYSTEM_OTHERS));
     char wrongUploadType[] = "RFSTATUS1\tready\t0\t0\t32768\tcbf43926\tMy Homebrew.gba\tReady\n";
     assert(!parseJobForSystem(wrongUploadType, &gbaJob, SYSTEM_OTHERS));
+    const char *mediaNames[] = { "Movie.dpg", "Track.mp3", "Photo.PNG", "Music.it" };
+    const char *mediaFolders[] = { "/videos", "/music", "/pictures", "/music" };
+    for (unsigned index = 0; index < sizeof(mediaNames) / sizeof(mediaNames[0]); index++) {
+        char mediaStatus[256];
+        snprintf(mediaStatus, sizeof(mediaStatus), "RFSTATUS1\tready\t0\t0\t1\tcbf43926\t%s\tReady\n", mediaNames[index]);
+        assert(!strcmp(mediaDirectory(mediaNames[index]), mediaFolders[index]));
+        assert(parseJobForSystem(mediaStatus, &gbaJob, SYSTEM_OTHERS));
+        snprintf(mediaStatus, sizeof(mediaStatus), "RFSTATUS1\tready\t0\t0\t512\tcbf43926\t%s\tReady\n", mediaNames[index]);
+        assert(!parseJobForSystem(mediaStatus, &gbaJob, SYSTEM_NDS));
+    }
+    assert(!mediaDirectory("Game.nds") && !mediaDirectory("File.mp3.exe"));
+    char unsafeMedia[] = "RFSTATUS1\tready\t0\t0\t100\tcbf43926\t../Photo.png\tReady\n";
+    assert(!parseJobForSystem(unsafeMedia, &gbaJob, SYSTEM_OTHERS));
+    char emptyMedia[] = "RFSTATUS1\tready\t0\t0\t0\tcbf43926\tPhoto.png\tReady\n";
+    assert(!parseJobForSystem(emptyMedia, &gbaJob, SYSTEM_OTHERS));
     assert(!job("RFSTATUS1\tready\t0\t0\t8388608\t-\tGame.nds\tReady\n"));
     assert(!job("RFSTATUS1\tready\t0\t0\t8388608\t12345678\t../Game.nds\tReady\n"));
     assert(!job("RFSTATUS1\tready\t0\t0\t8388608\t12345678\tGame.zip\tReady\n"));

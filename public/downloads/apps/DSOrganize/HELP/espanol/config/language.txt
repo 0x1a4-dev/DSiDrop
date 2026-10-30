@@ -1,0 +1,1 @@
+Este ajuste cambiará el idioma mostrado en DSOrganize.  Ten en cuenta que no todos los idiomas están actualizados ya que las traducciones están a cargo de los usuarios.

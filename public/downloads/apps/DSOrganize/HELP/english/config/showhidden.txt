@@ -1,0 +1,1 @@
+This setting changes whether or not the Browser will display hidden files.  If hidden file viewing is enabled, DSOrganize will also be able to hide and unhide files.

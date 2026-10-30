@@ -14,6 +14,8 @@ static bool transient(void) {
     return errno == EWOULDBLOCK || errno == EAGAIN || errno == EINPROGRESS || errno == EALREADY;
 }
 
+static bool openRequest(Http *http, const char *method, const char *path, uint32_t offset, unsigned timeoutFrames, FILE *upload, uint32_t uploadSize);
+
 static uint64_t timeoutTicks(unsigned frames) {
     return (uint64_t)frames * TICK_FREQ / 60;
 }
@@ -44,6 +46,10 @@ bool httpOpen(Http *http, const char *method, const char *path, uint32_t offset)
 }
 
 bool httpOpenTimeout(Http *http, const char *method, const char *path, uint32_t offset, unsigned timeoutFrames) {
+    return openRequest(http, method, path, offset, timeoutFrames, NULL, 0);
+}
+
+static bool openRequest(Http *http, const char *method, const char *path, uint32_t offset, unsigned timeoutFrames, FILE *upload, uint32_t uploadSize) {
     memset(http, 0, sizeof(*http));
     http->timeoutFrames = timeoutFrames;
     unsigned connectTimeout = timeoutFrames < 60 * 15 ? timeoutFrames : 60 * 15;
@@ -73,12 +79,12 @@ bool httpOpenTimeout(Http *http, const char *method, const char *path, uint32_t 
         }
         if (!appYield()) goto failed;
     }
-    char request[1024], range[64] = "";
+    char request[1400], range[64] = "";
     if (offset) snprintf(range, sizeof(range), "Range: bytes=%lu-\r\n", (unsigned long)offset);
     int requestSize = snprintf(request, sizeof(request),
         "%s %s HTTP/1.1\r\nHost: %s:%u\r\nUser-Agent: " APP_NAME "/" APP_VERSION "\r\n"
-        "Accept-Encoding: identity\r\nConnection: close\r\n%sContent-Length: 0\r\n\r\n",
-        method, path, settings.host, settings.port, range);
+        "Accept-Encoding: identity\r\nConnection: close\r\n%sContent-Length: %lu\r\n\r\n",
+        method, path, settings.host, settings.port, range, (unsigned long)uploadSize);
     if (requestSize < 0 || requestSize >= (int)sizeof(request)) goto failed;
     int sent = 0;
     started = tickGetCount();
@@ -92,6 +98,25 @@ bool httpOpenTimeout(Http *http, const char *method, const char *path, uint32_t 
         }
     }
 
+    if (upload) {
+        static unsigned char uploadBuffer[4096];
+        uint32_t uploaded = 0;
+        while (uploaded < uploadSize) {
+            unsigned amount = uploadSize - uploaded;
+            if (amount > sizeof(uploadBuffer)) amount = sizeof(uploadBuffer);
+            if (fread(uploadBuffer, 1, amount, upload) != amount) { strcpy(lastError, "Could not read save file"); goto failed; }
+            unsigned sentBytes = 0;
+            started = tickGetCount();
+            while (sentBytes < amount) {
+                int n = send(http->socket, uploadBuffer + sentBytes, amount - sentBytes, 0);
+                if (n > 0) { sentBytes += n; started = tickGetCount(); }
+                else if (n < 0 && !transient()) { strcpy(lastError, "Save upload connection failed"); goto failed; }
+                else if (tickGetCount() - started >= timeout) { strcpy(lastError, "Save upload timed out"); goto failed; }
+                if (!appYield()) goto failed;
+            }
+            uploaded += amount;
+        }
+    }
     char *headerEnd = NULL;
     while (http->used < sizeof(http->buffer) - 1) {
         int n = receive(http, http->buffer + http->used, sizeof(http->buffer) - 1 - http->used);
@@ -148,6 +173,15 @@ int httpRead(Http *http, void *buffer, size_t length) {
         return n;
     }
     return receive(http, buffer, length);
+}
+
+bool httpUpload(const char *path, FILE *file, uint32_t size) {
+    static Http http;
+    if (!openRequest(&http, "PUT", path, 0, 60 * 30, file, size)) return false;
+    bool ok = http.status == 200;
+    if (!ok) snprintf(lastError, 192, "Save upload rejected (HTTP %d). Check Backups on PC.", http.status);
+    httpClose(&http);
+    return ok;
 }
 
 bool httpText(const char *method, const char *path, char *output, size_t capacity) {

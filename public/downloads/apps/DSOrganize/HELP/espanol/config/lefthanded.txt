@@ -1,0 +1,1 @@
+Este ajuste te permite especificar a DSOrganize con que mano prefieres agarrar el lápiz.  Las barras de navegación se moverán como consecuencia de este ajuste.

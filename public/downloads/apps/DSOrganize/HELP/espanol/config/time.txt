@@ -1,0 +1,1 @@
+Este ajuste te permite escoger si las horas mostradas en DSOrganize usan el formato AM/PM o el de 24 horas.

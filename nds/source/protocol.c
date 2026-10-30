@@ -57,6 +57,24 @@ const char *downloadDirectory(RomSystem system) {
     }
 }
 
+const char *mediaDirectory(const char *name) {
+    const char *extension = strrchr(name, '.');
+    if (!extension) return NULL;
+    static const struct { const char *extension, *directory; } formats[] = {
+        { ".mp4", "/videos" }, { ".avi", "/videos" }, { ".mov", "/videos" },
+        { ".mkv", "/videos" }, { ".webm", "/videos" }, { ".mpeg", "/videos" },
+        { ".mpg", "/videos" }, { ".dpg", "/videos" }, { ".rvid", "/videos" },
+        { ".mp3", "/music" }, { ".wav", "/music" }, { ".ogg", "/music" },
+        { ".aac", "/music" }, { ".m4a", "/music" }, { ".flac", "/music" },
+        { ".mod", "/music" }, { ".it", "/music" }, { ".s3m", "/music" }, { ".xm", "/music" },
+        { ".jpg", "/pictures" }, { ".jpeg", "/pictures" }, { ".png", "/pictures" },
+        { ".gif", "/pictures" }, { ".bmp", "/pictures" }, { ".webp", "/pictures" },
+    };
+    for (unsigned index = 0; index < sizeof(formats) / sizeof(formats[0]); index++)
+        if (!strcasecmp(extension, formats[index].extension)) return formats[index].directory;
+    return NULL;
+}
+
 bool gameValid(const Game *game) {
     if ((unsigned)game->system >= SYSTEM_COUNT) return false;
     const char *fields[] = { game->id, game->title, game->region, game->languages };
@@ -129,9 +147,14 @@ bool parseJobForSystem(char *text, Job *job, RomSystem system) {
         strcmp(job->state, "extracting") && strcmp(job->state, "ready") && strcmp(job->state, "error")) return false;
     if (!strcmp(job->state, "ready")) {
         size_t length = strlen(job->name);
-        if (job->size < 512 || job->size > MAX_GAME_SIZE || !strcmp(crc, "-") ||
-            length < 5 || strcmp(job->name + length - 4, system == SYSTEM_GBA ? ".gba" : ".nds") || job->name[0] == '.' ||
+        bool theme = system == SYSTEM_OTHERS && length > 6 && !strcmp(job->name + length - 6, ".theme");
+        bool folder = system == SYSTEM_OTHERS && length > 7 && !strcmp(job->name + length - 7, ".folder");
+        bool media = system == SYSTEM_OTHERS && mediaDirectory(job->name) != NULL;
+        if (job->size < (media || folder ? 1U : 512U) || job->size > MAX_GAME_SIZE || !strcmp(crc, "-") ||
+            length < 5 || (!theme && !folder && !media && strcmp(job->name + length - 4, system == SYSTEM_GBA ? ".gba" : ".nds")) || job->name[0] == '.' ||
             strpbrk(job->name, "/\\:<>\"|?*")) return false;
+        for (const char *character = job->name; *character; character++)
+            if ((unsigned char)*character < 32 || (unsigned char)*character > 126) return false;
     }
     return true;
 }
@@ -151,6 +174,17 @@ uint32_t crcUpdate(uint32_t crc, const void *data, size_t length) {
     const unsigned char *bytes = data;
     while (length--) crc = (crc >> 8) ^ table[(crc ^ *bytes++) & 255];
     return crc;
+}
+
+uint64_t fileFingerprint(const char *path, uint32_t size, uint32_t modified) {
+    uint64_t hash = 14695981039346656037ULL;
+    for (const unsigned char *character = (const unsigned char *)path; *character; character++)
+        hash = (hash ^ *character) * 1099511628211ULL;
+    for (unsigned shift = 0; shift < 32; shift += 8) {
+        hash = (hash ^ ((size >> shift) & 255)) * 1099511628211ULL;
+        hash = (hash ^ ((modified >> shift) & 255)) * 1099511628211ULL;
+    }
+    return hash;
 }
 
 void urlEncode(const char *source, char *dest, size_t capacity) {
