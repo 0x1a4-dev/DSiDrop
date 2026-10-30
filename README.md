@@ -19,6 +19,8 @@ A self-hosted game catalog and download manager with a companion app for Nintend
 - Back up, restore and transfer saves between devices.
 - Update the DSi app from your own server.
 
+<img width="1154" height="839" alt="DSiDrop_Preview" src="https://github.com/user-attachments/assets/5c2e4431-1f5d-4dd7-8618-522b96ea5b19" />
+
 ## Quick start
 
 Install Docker with Linux containers and Docker Compose. In the project folder, run:
