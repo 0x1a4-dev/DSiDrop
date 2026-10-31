@@ -1,5 +1,4 @@
 #include "cover.h"
-#include <dswifi9.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -16,6 +15,7 @@ typedef struct {
     RomSystem system;
     bool available;
     uint32_t used;
+    uint32_t revision;
     uint16_t pixels[COVER_PIXELS];
 } CachedCover;
 typedef struct {
@@ -30,6 +30,7 @@ static unsigned pageCount, activeItem, sendLength, sent, received, idleFrames, t
 static PrefetchState prefetchState;
 static char prefetchHeaders[320];
 static uint32_t clock;
+static uint32_t contentRevision;
 static Http request = { .socket = -1 };
 static unsigned char payload[12 + COVER_PIXELS * 2];
 
@@ -48,6 +49,7 @@ static void remember(const char *id, RomSystem system, bool available) {
     }
     strcpy(entry->id, id); entry->system = system;
     entry->available = available; entry->used = ++clock;
+    entry->revision = ++contentRevision;
     if (available) memcpy(entry->pixels, payload + 12, sizeof(entry->pixels));
 }
 
@@ -62,9 +64,14 @@ void coverTestFixture(const Game *game) {
     CachedCover *entry = &cache[next++ % COVER_CACHE_SIZE];
     strcpy(entry->id, game->id); entry->system = game->system;
     entry->available = true; entry->used = ++clock;
+    entry->revision = ++contentRevision;
     for (unsigned y = 0; y < COVER_SIZE; y++) for (unsigned x = 0; x < COVER_SIZE; x++)
         entry->pixels[y * COVER_SIZE + x] = 0x8000 | (x * 31 / (COVER_SIZE - 1)) |
+#ifdef ROMSFINDER_MOTION_TEST
+            ((y * 31 / (COVER_SIZE - 1)) << 5) | (((next * 7) % 24 + 7) << 10);
+#else
             ((y * 31 / (COVER_SIZE - 1)) << 5) | (24 << 10);
+#endif
 }
 
 void coverTestMissingFixture(const Game *game) {
@@ -82,6 +89,13 @@ const uint16_t *coverFind(const Game *game, bool *known) {
     return entry->available ? entry->pixels : NULL;
 }
 
+uint32_t coverRevision(const uint16_t *pixels) {
+    if (!pixels) return 0;
+    for (unsigned i = 0; i < COVER_CACHE_SIZE; i++)
+        if (pixels == cache[i].pixels) return cache[i].revision;
+    return 0;
+}
+
 void coverPausePrefetch(void) {
     if (prefetchState == PREFETCH_IDLE) return;
     httpClose(&request);
@@ -92,8 +106,13 @@ void coverPausePrefetch(void) {
 
 void coverPage(const Game *games, unsigned count, unsigned selected) {
     (void)selected;
+    unsigned nextCount = count > PAGE_SIZE ? PAGE_SIZE : count;
+    bool unchanged = nextCount == pageCount;
+    for (unsigned index = 0; unchanged && index < nextCount; index++)
+        unchanged = currentPage[index].system == games[index].system && !strcmp(currentPage[index].id, games[index].id);
+    if (unchanged && prefetchState != PREFETCH_IDLE) return;
     coverPausePrefetch();
-    pageCount = count > PAGE_SIZE ? PAGE_SIZE : count;
+    pageCount = nextCount;
     memset(currentPage, 0, sizeof(currentPage));
     for (unsigned i = 0; i < pageCount; i++) {
         strcpy(currentPage[i].id, games[i].id);
@@ -163,7 +182,7 @@ static bool parseHeaders(unsigned *bodyStart) {
             errno = 0;
             unsigned long length = strtoul(line + 15, &numberEnd, 10);
             while (*numberEnd == ' ') numberEnd++;
-            if (errno || *numberEnd || length != sizeof(payload)) { finishPrefetch(); return false; }
+            if (errno || *numberEnd || (request.status == 200 && length != sizeof(payload))) { finishPrefetch(); return false; }
             request.length = (uint32_t)length; hasLength = true;
         }
         if (!strncasecmp(line, "Transfer-Encoding:", 18) ||
@@ -171,6 +190,10 @@ static bool parseHeaders(unsigned *bodyStart) {
             finishPrefetch(); return false;
         }
         line = next;
+    }
+    if (request.status == 404 && hasLength) {
+        remember(currentPage[activeItem].id, currentPage[activeItem].system, false);
+        finishPrefetch(); return true;
     }
     if (request.status != 200 || !hasLength) { finishPrefetch(); return false; }
     prefetchState = PREFETCH_BODY;

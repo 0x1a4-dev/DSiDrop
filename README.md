@@ -15,8 +15,8 @@ A self-hosted game catalog and download manager with a companion app for Nintend
 - Upload your own games, media and folders.
 - Explore homebrew apps and TWiLight Menu++ themes.
 - Organize games into collections and download queues.
-- Manage multiple DSi devices and their installed games.
-- Back up, restore and transfer saves between devices.
+- Manage installed games on SD and multiple DSi devices.
+- Back up, restore and transfer saves from your DSi or browser.
 - Update the DSi app from your own server.
 
 <img width="1154" height="839" alt="DSiDrop_Preview" src="https://github.com/user-attachments/assets/5c2e4431-1f5d-4dd7-8618-522b96ea5b19" />
@@ -43,8 +43,8 @@ You need a DSi or DSi XL with TWiLight Menu++, a writable FAT32 SD card and a ru
 
 1. Download [DSiDrop.nds](public/downloads/DSiDrop.nds) from the web app or this repository and copy it to the DSi SD card.
 2. Launch it through TWiLight Menu++ in **DSi mode**.
-3. Press **SELECT → A** to configure Wi-Fi.
-4. Press **SELECT → X** and enter your server PC's local IPv4 address and port (**3000** by default).
+3. Press **SELECT**, choose **Settings**, then **Wi-Fi network** to configure Wi-Fi.
+4. Choose **Server address** and enter your server PC's local IPv4 address and port (**3000** by default).
 
 Launch downloaded games through TWiLight Menu++. GBA playback depends on your handheld setup.
 

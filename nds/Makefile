@@ -41,7 +41,7 @@ export LD := $(CC)
 export OFILES := $(CFILES:.c=.o)
 export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) $(foreach dir,$(LIBDIRS),-I$(dir)/include) -I$(CURDIR)/$(BUILD)
 export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
-.PHONY: all $(BUILD) clean test-http test-update
+.PHONY: all $(BUILD) clean test-http test-update test-cover test-cover-motion
 all: $(BUILD)
 $(BUILD): $(DSWIFI_LIB)
 	@[ -d $@ ] || mkdir -p $@
@@ -58,6 +58,14 @@ test-update:
 	@mkdir -p build/tests
 	$(HOST_CC) -std=gnu11 -Wall -Wextra -Werror -Iinclude tests/update_test.c -o build/tests/update_test
 	./build/tests/update_test
+test-cover:
+	@mkdir -p build/tests
+	$(HOST_CC) -std=gnu11 -Wall -Wextra -Werror -DROMSFINDER_HOST_TEST -Iinclude tests/cover_prefetch_test.c -o build/tests/cover_test
+	./build/tests/cover_test
+test-cover-motion:
+	@mkdir -p build/tests
+	$(HOST_CC) -std=gnu11 -Wall -Wextra -Werror -Iinclude tests/cover_motion_test.c -o build/tests/cover_motion_test
+	./build/tests/cover_motion_test
 clean:
 	rm -rf -- $(BUILD) build/tests build/dswifi $(TARGET).elf $(TARGET).nds
 else

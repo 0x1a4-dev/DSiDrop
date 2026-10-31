@@ -1,14 +1,18 @@
 # DSiDrop for Nintendo DSi
 Start the server from the repository root with `docker compose up -d`.
 Copy [DSiDrop.nds](../public/downloads/DSiDrop.nds) to your DSi SD card and launch it with TWiLight Menu++ in DSi mode.
-Connect both devices to the same network; on the DSi, press SELECT then X to enter your PC's local IP and port (default: 3000).
+Connect both devices to the same network; on the DSi, press SELECT, choose Settings, then Server address to enter your PC's local IP and port (default: 3000).
 To build from source, install devkitPro with nds-dev and run `.\nds\build.ps1` from the repository root; see [third-party notices](THIRD-PARTY.txt).
+
+The English dual-screen interface includes a cover gallery with background preloading, an offline SD library, downloads and settings. SELECT opens navigation; menus support buttons and touch, while text entry uses the touchscreen keyboard. Manage dated save backups directly under **SD card**, including individual or full-card backups, automatic backup settings, restore, and transfer to a matching game on another online DSi. Save operations require the updated server; restores preserve the previous save. ROM deletion is confirmed on the handheld and keeps save files.
+
+The cover carousel animates position and size over 22 display frames, including neighboring covers and rapid direction changes. Unchanged covers stay in graphics memory during UI refreshes. Proportional body text, keyboard labels and the 25-symbol icon set use antialiased coverage at the DSi's native resolution. Font headers and icon artwork are included; regenerating them with `nds/tools/build_title_font.py` and `nds/tools/build_ui_art.py` requires Pillow and an installed supported font.
 
 In **Others**, tap **Category** and select **Apps** to browse the `.nds` files in the server's `public/downloads/apps/` directory, or **Your uploads** for your own library. Downloads and the queue save the executable to `/roms/others/`. DSOrganize 3.2 additionally requires its `DSOrganize` directory at the SD root or under `/data/`; obtain the complete ZIP from its web details and copy that directory using your PC before launching it.
 
 **Others > Category > Multimedia** lists uploaded videos, music and images. DSiDrop 1.17.0 saves them to `/videos/`, `/music/` and `/pictures/`, creating missing folders. Playback requires compatible homebrew; no media conversion is performed.
 
-The bundled apps include local covers based on their original NDS icons. To update DSiDrop itself, update the PC server and select **SELECT > L / Update**. The app downloads and verifies the server's build, backs up the old executable as `.nds.bak`, and installs at its launch path. If the launcher did not supply a valid path, the confirmation instead shows `/DSiDrop.nds`. Close the completion message to exit and reopen the installed copy in TWiLight Menu++. Settings and queues are preserved. The updater-enabled build must be installed once before this option is available.
+The bundled apps include local covers based on their original NDS icons. To update DSiDrop itself, update the PC server and select **SELECT > Settings > App update**. The app downloads and verifies the server's build, backs up the old executable as `.nds.bak`, and installs at its launch path. If the launcher did not supply a valid path, the confirmation instead shows `/DSiDrop.nds`. Close the completion message to exit and reopen the installed copy in TWiLight Menu++. Settings and queues are preserved. The updater-enabled build must be installed once before this option is available.
 
 In **Others > Category > Themes**, choose Nintendo DSi, Nintendo 3DS, R4 Original or Wood UI, optionally with **X / Favorites only**. Select a theme to open its details: **Y** shows the original dual-screen preview when available, **X** saves or removes a shared server favorite, and **A** installs. The verified download is unpacked directly into `/_nds/TWiLightMenu/<menu>/themes/<theme>/`, creating missing folders. Existing themes are staged and backed up as `<theme>.dsidrop-bak` before replacement; keep that backup for recovery after a power interruption. Select the installed skin in TWiLight Menu++ Settings afterwards. TWiLight Menu++ itself is not installed or reconfigured.
 
@@ -25,5 +29,7 @@ The build also requires Python 3, CMake and internet access on its first run. It
 Run `make -C nds test-http` from the repository root in a devkitPro shell with a host C compiler (`HOST_CC`, default: `cc`). The HTTP regression test covers immediate and fragmented reads, buffered response data, cancellation, socket errors and elapsed-time connect/send/receive timeouts without DSi hardware.
 
 Run `make -C nds test-update` for the focused host test of update installation, backups, rollback and preservation of the installed app on failure.
+
+Run `make -C nds test-cover test-cover-motion` for cover-cache revisions, prefetching, smooth motion endpoints and interrupted/reversed transitions. The emulator renderer's `--motion` mode uses a build with `-DROMSFINDER_UI_TEST -DROMSFINDER_MOTION_TEST` to check the actual ARM9 carousel, unchanged-cover redraws and seamless sprite scaling.
 
 After building, run `python nds/tests/test_dswifi.py --check-arm` to check source verification, repeatable offline preparation and the TCP implementation linked into the ARM binary. The HTTP receive loop sleeps cooperatively for 1 ms when no data is available; input and cancellation remain time-based rather than tied to each network read.

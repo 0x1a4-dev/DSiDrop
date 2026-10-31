@@ -4,6 +4,7 @@ Usage: python render_display.py CORE.dll ROM.nds OUTPUT_DIRECTORY [--ui]
 Requires Pillow. No native windows, BIOS dumps, SD contents or Wi-Fi are used.
 """
 import ctypes as C
+from collections import Counter
 import json
 from pathlib import Path
 import sys
@@ -27,6 +28,7 @@ class GameInfo(C.Structure):
 
 core_path, rom_path, output_path = (Path(arg).resolve() for arg in sys.argv[1:4])
 ui_mode = "--ui" in sys.argv[4:]
+motion_mode = "--motion" in sys.argv[4:]
 feedback_mode = "--feedback" in sys.argv[4:]
 region_mode = "--region" in sys.argv[4:] or "--region-cancel" in sys.argv[4:]
 region_cancel = "--region-cancel" in sys.argv[4:]
@@ -41,7 +43,10 @@ intro_mode = "--intro" in sys.argv[4:] or intro_skip_key is not None or intro_co
 intro_skip = intro_skip_key is not None
 assert not intro_skip or intro_skip_key in ("a", "b", "start", "touch"), "Choose a, b, start or touch"
 system_mode = "--system" in sys.argv[4:]
-if intro_mode:
+if motion_mode:
+    captures = {120: "browser", 190: "lift", 200: "glide", 250: "next", 370: "previous",
+                438: "retarget", 452: "reverse", 510: "rapid", 590: "redraw", 690: "complete"}
+elif intro_mode:
     captures = {40: "arrival", 170: "reveal", 240: "browser"} if intro_cover else {40: "arrival", 110: "startup", 240: "settled"} if intro_skip else {40: "arrival", 75: "fall", 110: "transfer", 170: "reveal", 240: "startup"}
 elif system_mode:
     captures = {120: "nds", 300: "r-gba", 480: "r-others", 660: "l-gba", 840: "l-nds",
@@ -71,6 +76,7 @@ frame = 0
 last_image = None
 transition_frames = {}
 intro_frames = []
+motion_frames = {}
 intro_startup_frame = None
 held_tabs = {"r-gba": [], "r-others": [], "l-gba": [], "l-nds": [], "l-wrap-others": [], "r-wrap-nds": []}
 environment_calls = set()
@@ -155,6 +161,13 @@ def poll():
 
 @INPUT
 def input_state(_port, device, _index, button):
+    if motion_mode:
+        if device != 1:
+            return 0
+        chosen = next((key for start, duration, key in ((180, 6, 5), (186, 6, 9), (300, 6, 4),
+                      (420, 6, 5), (432, 6, 5), (444, 6, 4), (540, 6, 9), (630, 6, 3))
+                       if start <= frame < start + duration), None)
+        return 0 if chosen is None else (1 << chosen) if button == 256 else int(button == chosen)
     if intro_mode:
         pressed = (intro_skip and 60 <= frame < 66) or (intro_held and frame < 100)
         if device in (2, 6) and intro_skip_key == "touch":
@@ -203,6 +216,8 @@ if not core.retro_load_game(C.byref(game)):
 try:
     for frame in range(max(captures) + 30):
         core.retro_run()
+        if motion_mode and 160 <= frame <= 610 and last_image is not None:
+            motion_frames[frame] = last_image.copy()
         if intro_mode and frame % 2 == 0 and frame <= 240 and last_image is not None:
             intro_frames.append(last_image.copy())
         if intro_mode and not intro_cover and intro_startup_frame is None and last_image is not None:
@@ -221,12 +236,38 @@ try:
                 raise RuntimeError("No software video frame received")
             name = captures[frame]
             last_image.save(output_path / (name + ".png"))
+    if motion_mode:
+        stage = lambda picture: picture.crop((0, 24, 256, 140)).tobytes()
+        picture = lambda name: Image.open(output_path / (name + ".png"))
+        assert stage(picture("browser")) == stage(picture("previous")), "Reverse did not settle on the original cover"
+        assert stage(picture("next")) == stage(picture("rapid")), "Rapid reversal landed on the wrong cover"
+        assert stage(picture("rapid")) == stage(picture("redraw")), "Unchanged-cover redraw altered the settled sprites"
+        moving = {stage(motion_frames[at]) for at in range(180, 230)}
+        assert len(moving) >= 15, f"Cover movement skipped too many frames: {len(moving)} distinct images"
+        # Fixture covers are opaque gradients with one constant blue per cover.
+        # A background pixel between two pixels of that same blue exposes a
+        # split affine chunk, even when multiple moving covers overlap.
+        for at, native in motion_frames.items():
+            pixels = native.load()
+            blue_counts = Counter(b for _, _, b in native.crop((0, 24, 256, 140)).get_flattened_data())
+            fixture_blues = {blue for blue, count in blue_counts.items() if 56 <= blue <= 240 and count >= 256}
+            for y in range(25, 139):
+                for x in range(1, 255):
+                    if pixels[x, y][2] in fixture_blues:
+                        continue
+                    left, right = pixels[x - 1, y][2], pixels[x + 1, y][2]
+                    above, below = pixels[x, y - 1][2], pixels[x, y + 1][2]
+                    assert not ((left == right and left in fixture_blues) or (above == below and above in fixture_blues)), (
+                        f"Opaque cover has an affine seam at frame {at}, pixel ({x}, {y})")
+        frames = [picture for at, picture in motion_frames.items() if at <= 530 and at % 2 == 0]
+        frames[0].save(output_path / "motion.gif", save_all=True, append_images=frames[1:], duration=33, loop=0)
+        print(f"Cover motion: {len(moving)} distinct native frames, reverse, mid-flight retarget and unchanged-cover redraw passed")
     if intro_mode:
         assert len({picture.tobytes() for picture in intro_frames}) > 15, "Intro did not animate"
         intro_frames[0].save(output_path / "intro.gif", save_all=True, append_images=intro_frames[1:], duration=33, loop=0)
         target = Image.open(output_path / ("browser.png" if intro_cover else "startup.png"))
         if intro_cover:
-            pixels = target.crop((8, 224, 96, 312))
+            pixels = target.crop((72, 24, 184, 136))
             assert len(set(pixels.get_flattened_data())) > 900 and all(b > 180 for _, _, b in pixels.get_flattened_data()), "Intro altered cover graphics or blending"
             print("Intro: sprites and blend state restored; catalog cover renders correctly")
         else:
@@ -247,9 +288,9 @@ try:
         back = Image.open(output_path / "l-nds.png")
         tab_pixels = lambda picture: picture.crop((0, 192, 256, 216)).tobytes()
         assert len({tab_pixels(picture) for picture in (nds, gba, others)}) == 3, "Three platform views must differ"
-        assert gba.getpixel((12, 196)) != gba.getpixel((140, 196)), "GBA left tab is not selected"
-        assert others.getpixel((12, 196)) == gba.getpixel((140, 196)), "Others left tab must be inactive GBA"
-        assert others.getpixel((140, 196)) == gba.getpixel((12, 196)), "Others right tab is not selected"
+        assert gba.getpixel((12, 196)) != gba.getpixel((84, 196)), "GBA left tab is not selected"
+        assert others.getpixel((12, 196)) == gba.getpixel((84, 196)), "Others left tab must be inactive GBA"
+        assert others.getpixel((84, 196)) == gba.getpixel((12, 196)), "Others right tab is not selected"
         assert tab_pixels(back) == tab_pixels(nds), "L did not return to NDS"
         assert tab_pixels(Image.open(output_path / "l-wrap-others.png")) == tab_pixels(others), "L did not wrap NDS to Others"
         assert tab_pixels(Image.open(output_path / "r-wrap-nds.png")) == tab_pixels(nds), "R did not wrap Others to NDS"
@@ -258,8 +299,8 @@ try:
             assert set(frames) == {expected}, f"Holding a shoulder button repeatedly switched systems: {name}"
         next_page = Image.open(output_path / "next-page.png")
         previous = Image.open(output_path / "previous-page.png")
-        assert next_page.crop((0, 176, 256, 192)).tobytes() != back.crop((0, 176, 256, 192)).tobytes(), "Right did not change page"
-        assert previous.crop((0, 176, 256, 192)).tobytes() == back.crop((0, 176, 256, 192)).tobytes(), "Left did not return to previous page"
+        assert next_page.crop((96, 0, 212, 24)).tobytes() != back.crop((96, 0, 212, 24)).tobytes(), "Right did not change page"
+        assert previous.crop((96, 0, 212, 24)).tobytes() == back.crop((96, 0, 212, 24)).tobytes(), "Left did not return to previous page"
         print("Controls: NDS/GBA -> GBA/Others sliding tabs, R/L through all three, wrap, held-key suppression and pages passed")
     if ui_mode:
         expected = {Image.open(output_path / (name + ".png")).crop((0, 192, 256, 384)).tobytes()
@@ -269,28 +310,28 @@ try:
             picture.save(output_path / f"transition-{number}-{at_frame}.png")
         if feedback_mode:
             assert extras, "Pressed button never became visible"
-            assert any(picture.getpixel((132, 170)) != Image.open(output_path / "browser.png").getpixel((132, 362))
+            assert any(picture.getpixel((128, 172)) != Image.open(output_path / "browser.png").getpixel((128, 364))
                        for _, picture in extras), "Pressed outline missing"
         else:
             assert not extras, f"Non-atomic bottom-screen redraw at frames {[item[0] for item in extras]}"
         print(f"Bottom-screen transition: {len(transition_frames)} complete images; "
               f"{'pressed feedback visible' if feedback_mode else 'no blank or partial frames'}")
     if region_mode:
-        before = Image.open(output_path / "browser.png").crop((0, 316, 256, 336)).tobytes()
-        after = Image.open(output_path / "selected.png").crop((0, 316, 256, 336)).tobytes()
+        before = Image.open(output_path / "browser.png").crop((96, 0, 212, 24)).tobytes()
+        after = Image.open(output_path / "selected.png").crop((96, 0, 212, 24)).tobytes()
         assert (before == after) if region_cancel else (before != after), "Region selection/cancel did not update the field correctly"
         print("Region dropdown: cancel preserves selection" if region_cancel else "Region dropdown: Europe selected using Down + confirm")
     if queue_mode:
         nds = Image.open(output_path / "queue-nds.png")
         gba = Image.open(output_path / "queue-gba.png")
         others = Image.open(output_path / "queue-others.png")
-        assert nds.crop((104, 220, 248, 316)).tobytes() != gba.crop((104, 220, 248, 316)).tobytes(), "Queue detail did not change with selection"
+        assert nds.crop((16, 140, 240, 172)).tobytes() != gba.crop((16, 140, 240, 172)).tobytes(), "Queue detail did not change with selection"
         for picture in (nds, gba):
-            assert len(set(picture.crop((8, 224, 96, 312)).get_flattened_data())) > 900, "Queue cover missing"
-        assert others.crop((104, 220, 248, 316)).tobytes() != gba.crop((104, 220, 248, 316)).tobytes(), "Others title/system detail missing"
-        assert len(set(others.crop((8, 224, 96, 312)).get_flattened_data())) < 200, "Others reused an NDS cover with the same ID"
-        assert others.crop((0, 316, 256, 336)).tobytes() != nds.crop((0, 316, 256, 336)).tobytes(), "Others SD destination missing"
-        print("Queue previews: NDS/GBA covers, Others title/destination/no-cover with same-ID isolation, navigation and Back passed")
+            assert len(set(picture.crop((72, 24, 184, 136)).get_flattened_data())) > 900, "Queue cover missing"
+        assert others.crop((16, 140, 240, 172)).tobytes() != gba.crop((16, 140, 240, 172)).tobytes(), "Others title/system detail missing"
+        assert len(set(others.crop((72, 24, 184, 136)).get_flattened_data())) < 200, "Others reused an NDS cover with the same ID"
+        assert others.crop((96, 0, 212, 24)).tobytes() != nds.crop((96, 0, 212, 24)).tobytes(), "Others queue platform missing"
+        print("Queue previews: NDS/GBA covers, Others title/platform/no-cover with same-ID isolation, navigation and Back passed")
     if startup_mode:
         pictures = [Image.open(output_path / (name + ".png")) for name in ("storage", "wifi", "authentication", "library")]
         assert len({picture.crop((0, 192, 256, 360)).tobytes() for picture in pictures}) == 4, "Startup stages did not update"

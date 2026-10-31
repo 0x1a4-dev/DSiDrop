@@ -212,3 +212,128 @@ void savesFinish(const SaveCommand *command, bool success, const char *message) 
     else snprintf(completion, sizeof(completion), "%.159s", message);
     due = 0;
 }
+
+static char nativeReply[8192];
+
+static void encodeSavePath(const char *path, char *encoded) {
+    encoded[0] = 0;
+    if (path) for (unsigned index = 0; index < strlen(path); index++)
+        snprintf(encoded + index * 2, 3, "%02x", (unsigned char)path[index]);
+}
+
+static bool decodeSavePath(const char *encoded, char *path) {
+    if (!encoded || !*encoded || strlen(encoded) > 440 || strlen(encoded) % 2 || strspn(encoded, "0123456789abcdef") != strlen(encoded)) return false;
+    unsigned length = strlen(encoded) / 2;
+    for (unsigned index = 0; index < length; index++) {
+        char byte[3] = {encoded[index * 2], encoded[index * 2 + 1], 0};
+        path[index] = strtoul(byte, NULL, 16);
+        if (!path[index]) return false;
+    }
+    path[length] = 0;
+    return validPath(path);
+}
+
+static bool nativeSaveRead(const char *method, const char *path, const char *view, char **state) {
+    nativeReply[0] = 0;
+    bool ok = httpText(method, path, nativeReply, sizeof(nativeReply));
+    if (!ok && strncmp(nativeReply, "RFSAVES1\terror\t", 15)) return false;
+    char *magic = strtok_r(nativeReply, "\t\r\n", state), *kind = strtok_r(NULL, "\t\r\n", state);
+    if (ok && magic && !strcmp(magic, "RFSAVES1") && kind && !strcmp(kind, view)) return true;
+    char *detail = kind && !strcmp(kind, "error") ? strtok_r(NULL, "\t\r\n", state) : NULL;
+    snprintf(lastError, 192, "%.191s", detail ? detail : "Update the server to use save management");
+    return false;
+}
+
+static bool nativeSaveGet(const char *view, const char *path, const char *backup, unsigned page, char **state) {
+    if (!path || strlen(path) > 220) { strcpy(lastError, "Invalid SD path"); return false; }
+    char encoded[448], url[640];
+    encodeSavePath(path, encoded);
+    snprintf(url, sizeof(url), "/api/dsi/saves?mac=%s&view=%s&page=%u&path=%s&backup=%s", clientMac(), view, page, encoded, backup ? backup : "");
+    return nativeSaveRead("GET", url, view, state);
+}
+
+static bool nativeNumber(char **state, unsigned *number, unsigned limit) {
+    char *value = strtok_r(NULL, "\t\r\n", state);
+    if (!value || !*value || strlen(value) > 10 || strspn(value, "0123456789") != strlen(value)) return false;
+    errno = 0;
+    unsigned long parsed = strtoul(value, NULL, 10);
+    if (errno || parsed > limit) return false;
+    *number = parsed;
+    return true;
+}
+
+bool savesGame(const char *path, Game *game) {
+    char *state;
+    if (!nativeSaveGet("game", path, NULL, 0, &state)) return false;
+    char *system = strtok_r(NULL, "\t\r\n", &state), *id = strtok_r(NULL, "\t\r\n", &state), *title = strtok_r(NULL, "\t\r\n", &state);
+    if (!system || !id || !title) return false;
+    if (!strcmp(system, "-")) return true;
+    RomSystem resolved = !strcmp(system, "nds") ? SYSTEM_NDS : !strcmp(system, "gba") ? SYSTEM_GBA : SYSTEM_OTHERS;
+    unsigned length = resolved == SYSTEM_GBA ? 8 : 32;
+    if (strlen(title) > 90 || (strcmp(id, "-") && (strlen(id) != length || strspn(id, "0123456789abcdef") != length))) return false;
+    game->system = resolved;
+    strcpy(game->id, !strcmp(id, "-") ? "" : id);
+    strcpy(game->title, title);
+    return true;
+}
+
+bool savesVersions(const char *path, unsigned page, SaveVersion *versions, unsigned *count, unsigned *total, bool *automatic) {
+    *count = 0; *total = 0;
+    char *state;
+    if (!nativeSaveGet("backups", path, NULL, page, &state)) return false;
+    unsigned amount, enabled;
+    if (!nativeNumber(&state, &amount, PAGE_SIZE) || !nativeNumber(&state, total, 1000000) || !nativeNumber(&state, &enabled, 1) || *total < amount) goto invalid;
+    *automatic = enabled != 0;
+    for (unsigned index = 0; index < amount; index++) {
+        SaveVersion *version = &versions[index];
+        char *id = strtok_r(NULL, "\t\r\n", &state), *date = strtok_r(NULL, "\t\r\n", &state);
+        unsigned size;
+        if (!id || strlen(id) != 32 || strspn(id, "0123456789abcdef") != 32 || !date || strlen(date) != 16 ||
+            !nativeNumber(&state, &size, 32U * 1024U * 1024U) || !size || !decodeSavePath(strtok_r(NULL, "\t\r\n", &state), version->path)) goto invalid;
+        strcpy(version->id, id); strcpy(version->date, date); version->size = size;
+    }
+    if (strtok_r(NULL, "\t\r\n", &state)) goto invalid;
+    *count = amount;
+    return true;
+invalid:
+    strcpy(lastError, "Invalid backup list from server");
+    return false;
+}
+
+bool savesTargets(const SaveVersion *version, unsigned page, SaveTarget *targets, unsigned *count, unsigned *total) {
+    *count = 0; *total = 0;
+    char *state;
+    if (!nativeSaveGet("targets", version->path, version->id, page, &state)) return false;
+    unsigned amount;
+    if (!nativeNumber(&state, &amount, PAGE_SIZE) || !nativeNumber(&state, total, 1000000) || *total < amount) goto invalid;
+    for (unsigned index = 0; index < amount; index++) {
+        SaveTarget *target = &targets[index];
+        char *mac = strtok_r(NULL, "\t\r\n", &state), *game = strtok_r(NULL, "\t\r\n", &state), *name = strtok_r(NULL, "\t\r\n", &state);
+        if (!mac || strlen(mac) != 12 || strspn(mac, "0123456789abcdef") != 12 || !game || strlen(game) != 32 ||
+            strspn(game, "0123456789abcdef") != 32 || !name || strlen(name) > 40 || !decodeSavePath(strtok_r(NULL, "\t\r\n", &state), target->path)) goto invalid;
+        strcpy(target->mac, mac); strcpy(target->game, game); strcpy(target->name, name);
+    }
+    if (strtok_r(NULL, "\t\r\n", &state)) goto invalid;
+    *count = amount;
+    return true;
+invalid:
+    strcpy(lastError, "Invalid destination list from server");
+    return false;
+}
+
+bool savesRequest(const char *action, const char *path, const char *backup, const SaveTarget *target, bool automatic) {
+    if (path && strlen(path) > 220) { strcpy(lastError, "Invalid save path"); return false; }
+    char source[448], destination[448], url[1400];
+    encodeSavePath(path, source);
+    snprintf(url, sizeof(url), "/api/dsi/saves?mac=%s&action=%s&enabled=%u%s%s&backup=%s", clientMac(), action,
+        automatic ? 1 : 0, path ? "&path=" : "", source, backup ? backup : "");
+    if (target) {
+        encodeSavePath(target->path, destination);
+        unsigned length = strlen(url);
+        snprintf(url + length, sizeof(url) - length, "&targetMac=%s&targetGame=%s&targetPath=%s", target->mac, target->game, destination);
+    }
+    char *state;
+    if (!nativeSaveRead("POST", url, "ok", &state)) return false;
+    due = 0;
+    return true;
+}

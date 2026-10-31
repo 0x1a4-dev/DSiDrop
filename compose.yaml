@@ -2,7 +2,7 @@ name: dsidrop
 
 services:
   dsidrop:
-    image: dsidrop:1.19.0
+    image: dsidrop:1.20.0
     build:
       context: .
     init: true

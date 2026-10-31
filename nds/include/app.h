@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #define APP_NAME "DSiDrop"
-#define APP_VERSION "1.19.0"
+#define APP_VERSION "1.20.0"
 
 #define PAGE_SIZE 10
 #define MAX_GAME_SIZE (512U * 1024U * 1024U)
@@ -68,12 +68,26 @@ void savesConnect(void);
 bool savesPoll(SaveCommand *command);
 bool savesExecute(const SaveCommand *command);
 void savesFinish(const SaveCommand *command, bool success, const char *message);
+typedef struct { char id[33], date[20], path[224]; uint32_t size; } SaveVersion;
+typedef struct { char mac[13], game[33], name[41], path[224]; } SaveTarget;
+bool savesGame(const char *path, Game *game);
+bool savesVersions(const char *path, unsigned page, SaveVersion *versions, unsigned *count, unsigned *total, bool *automatic);
+bool savesTargets(const SaveVersion *version, unsigned page, SaveTarget *targets, unsigned *count, unsigned *total);
+bool savesRequest(const char *action, const char *path, const char *backup, const SaveTarget *target, bool automatic);
 
 typedef struct { char id[33], path[224]; uint32_t size, modified, header; bool remove; } LibraryCommand;
+typedef struct { char path[224], title[91]; uint32_t size, modified; RomSystem system; } SdGame;
 void libraryConnect(const char *executable);
 bool libraryPoll(LibraryCommand *command);
 bool libraryExecute(const LibraryCommand *command);
 void libraryFinish(const LibraryCommand *command, bool success);
+bool libraryLocalScan(const char *executable);
+unsigned libraryLocalCount(void);
+const SdGame *libraryLocalGame(unsigned index);
+unsigned librarySavePaths(const SdGame *game, char paths[4][224]);
+bool libraryLocalDelete(unsigned index);
+void libraryLocalFree(void);
+void libraryRefresh(void);
 
 bool parseCatalog(char *text, Game *games, int *count, int *total, int *page, int *pages);
 bool parseJob(char *text, Job *job);

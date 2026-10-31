@@ -68,8 +68,8 @@ export async function dsiCover(params: URLSearchParams): Promise<Response> {
   const id = params.get("id");
   validateId(id, system);
   const sizeParam = params.get("size");
-  if (sizeParam != null && sizeParam !== "64" && sizeParam !== "88") throw new DsiError("Unsupported cover size");
-  const size = sizeParam === "88" ? 88 : 64;
+  if (sizeParam != null && sizeParam !== "64" && sizeParam !== "88" && sizeParam !== "112") throw new DsiError("Unsupported cover size");
+  const size = sizeParam === "112" ? 112 : sizeParam === "88" ? 88 : 64;
   const { rom, data } = await lookup(id, system);
   const url = rom.g?.includes("Themes") ? (await findTheme(id))?.screenshots[0]?.url : coverUrl(data.meta, rom);
   if (!url) return dsiText("RFERROR1\tNo cover available\n", 404);
@@ -85,7 +85,7 @@ export async function dsiCover(params: URLSearchParams): Promise<Response> {
   } else { cache.delete(key); cache.set(key, entry); }
   const output = await entry.result;
   if (!output) return dsiText("RFERROR1\tCover unavailable\n", 404);
-  if (output.length !== (size === 64 ? 8200 : 15500)) throw new DsiError("Invalid cover output", 500);
+  if (output.length !== (size === 64 ? 8 : 12) + size * size * 2) throw new DsiError("Invalid cover output", 500);
   return new Response(new Uint8Array(output), { headers: {
     "Content-Type": "application/octet-stream",
     "Content-Length": String(output.length),

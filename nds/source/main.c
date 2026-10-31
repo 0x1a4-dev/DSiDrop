@@ -47,7 +47,6 @@ int runCoverTests(void);
 Settings settings = { .host = DEFAULT_HOST, .port = DEFAULT_PORT, .wifiMode = WIFI_WPA2 };
 char lastError[192];
 static PrintConsole top, bottom;
-static PrintConsole *activeScreen;
 static Game games[PAGE_SIZE];
 static char query[81], response[4096];
 static char appPath[200] = "/DSiDrop.nds";
@@ -63,13 +62,19 @@ static DownloadQueue downloads;
 static bool queueRunning;
 static unsigned queueCompleted, queueBatchSize;
 static RomSystem transferSystem;
+static uint64_t sdSpaceDue, availableSdBytes;
+static bool sdSpaceKnown;
 static char browserNotice[48];
-static bool browserVisible, loadingCover;
-static unsigned coverFrames;
+static bool browserVisible;
 static int deferredKeys;
+static int navigationRequest;
+static Game sdDetail;
 static touchPosition lastTouch;
 static bool startupVisible, settingsVisible;
 static void drawSettings(void);
+static int navigationAt(int x);
+static int selectNavigation(unsigned active);
+static unsigned settingsFocus;
 static unsigned startupStage, startupTick;
 static char startupDetail[96];
 #define ACTION_ADD_QUEUE (1 << 20)
@@ -78,6 +83,9 @@ static char startupDetail[96];
 #define ACTION_GBA (1 << 23)
 #define ACTION_OTHERS (1 << 24)
 #define ACTION_RANDOM (1 << 25)
+#define ACTION_SD (1 << 26)
+#define ACTION_SELECT (1 << 27)
+#define ACTION_SETUP (1 << 28)
 #define ACTION_SYSTEMS (ACTION_NDS | ACTION_GBA | ACTION_OTHERS)
 static const char *regions[] = { "", "Europe", "Germany", "USA", "Japan", "World" };
 static const char *regionLabels[] = { "All regions", "Europe", "Germany", "USA", "Japan", "World" };
@@ -114,7 +122,7 @@ static RomSystem visibleSystem(unsigned slot) {
 
 static int systemTouchAction(int x) {
     static const int actions[] = { ACTION_NDS, ACTION_GBA, ACTION_OTHERS };
-    return actions[visibleSystem(x < 102 ? 0 : 1)];
+    return actions[visibleSystem(x < 72 ? 0 : 1)];
 }
 
 static void clearKeyboardBackground(Keyboard *keyboard) {
@@ -131,56 +139,94 @@ static void clearKeyboardBackground(Keyboard *keyboard) {
     dmaCopy(layout->mapDataReleased, map, mapBytes);
 }
 
-static void position(PrintConsole *screen, int row, int column) {
-    consoleSelect(screen);
-    activeScreen = screen;
-    uiInvalidate(screen == &top);
-    // libnds stores console coordinates as zero-based (unlike ANSI terminals).
-    screen->cursorY = row - 1;
-    screen->cursorX = column - 1;
-}
-
 static void clear(PrintConsole *screen) {
     if (screen == &bottom) { browserVisible = false; startupVisible = false; settingsVisible = false; }
-    consoleSelect(screen); activeScreen = screen; consoleClear();
+    consoleSelect(screen); consoleClear();
     uiClear(screen == &top);
     iprintf("\x1b[39m");
 }
 
 static void frame(PrintConsole *screen, const char *title) {
     clear(screen);
-    uiPanel(screen == &top, 4, 0, 248, 24, 2);
-    position(screen, 2, 3); iprintf("\x1b[36m%.28s\x1b[39m", title);
+    uiHeading(screen == &top, title, 16, 0, 232);
 }
 
-static void wrapped(const char *text, int maxLines) {
-    PrintConsole *screen = activeScreen;
-    int column = screen->cursorX;
-    if (column < 1) column = 1;
-    int row = screen->cursorY;
-    unsigned width = 30 - column;
-    while (*text && maxLines--) {
-        unsigned n = strlen(text);
-        if (n > width) n = width;
-        const char *newline = memchr(text, '\n', n);
-        if (newline) n = newline - text;
-        else if (strlen(text) > n && text[n] != ' ') {
-            unsigned word = n;
-            while (word && text[word] != ' ') word--;
-            if (word) n = word;
-        }
-        position(screen, ++row, column + 1); iprintf("%.*s", (int)n, text);
-        text += n;
-        if (*text == '\n') text++;
-        while (*text == ' ') text++;
+static void symbolButton(int x, int y, int width, int height, unsigned background, UiSymbol symbol, const char *label) {
+    uiButton(x, y, width, height, background);
+    int top = y + (height - 16) / 2;
+    uiSymbol(false, x + 8, top, symbol, background == 4 ? 7 : 5);
+    if (width < 128) uiCaption(false, label, x + 30, top, width - 38, 7);
+    else uiText(false, label, x + 36, top, width - 44, 1);
+}
+
+static void drawNavigation(unsigned active) {
+    static const char *labels[] = {"Catalog", "SD card", "Transfers", "Settings"};
+    for (unsigned slot = 0; slot < 4; slot++) {
+        uiButton(slot * 64, 164, 64, 28, slot == active ? 8 : 2);
+        uiSymbol(false, slot * 64 + 24, 165, (UiSymbol)slot, slot == active ? 5 : 6);
+        uiCenteredCaption(false, labels[slot], slot * 64, 179, 64, slot == active ? 5 : 6);
     }
+}
+
+static void drawTopHeading(const char *title) {
+    clear(&top);
+    if (!strcmp(title, APP_NAME)) uiFeatureBackdrop();
+    uiHeading(true, title, 16, 0, 196);
+    uiIcon(true, 216, 0);
+}
+
+static void formatStorageSize(uint64_t bytes, char *output, size_t capacity) {
+    uint64_t divisor = 1;
+    const char *unit = "B";
+    if (bytes >= 1024ULL * 1024 * 1024) { divisor = 1024ULL * 1024 * 1024; unit = "GiB"; }
+    else if (bytes >= 1024 * 1024) { divisor = 1024 * 1024; unit = "MiB"; }
+    else if (bytes >= 1024) { divisor = 1024; unit = "KiB"; }
+    unsigned fraction = (bytes % divisor) * 10 / divisor;
+    if (fraction) snprintf(output, capacity, "%llu.%c %s", (unsigned long long)(bytes / divisor), '0' + (int)fraction, unit);
+    else snprintf(output, capacity, "%llu %s", (unsigned long long)(bytes / divisor), unit);
+}
+
+static void readSdSpace(bool force) {
+    uint64_t now = tickGetCount();
+    if (!force && now < sdSpaceDue) return;
+    sdSpaceDue = now + 5 * TICK_FREQ;
+    struct statvfs space;
+    sdSpaceKnown = statvfs("/", &space) == 0;
+    if (sdSpaceKnown) {
+        uint64_t blockSize = space.f_frsize ? space.f_frsize : space.f_bsize;
+        sdSpaceKnown = blockSize && space.f_bavail <= space.f_blocks;
+        if (sdSpaceKnown) availableSdBytes = (uint64_t)space.f_bavail * blockSize;
+    }
+}
+
+static void drawFocusedGame(const Game *game, const char *notice) {
+    drawTopHeading(APP_NAME);
+    bool known = true;
+    const u16 *pixels = *game->id ? coverFind(game, &known) : NULL;
+    if (pixels) uiTopCover(pixels);
+    else {
+        uiSymbol(true, 120, 64, UI_CATALOG, 4);
+        uiCenteredCaption(true, known ? "No artwork" : "Loading artwork", 72, 94, 112, 6);
+    }
+    uiCenteredText(true, game->title, 16, 140, 224, 2);
+    char metadata[96], gameSize[24], freeSpace[24];
+    snprintf(metadata, sizeof(metadata), "%s / %.24s", systemLabel(game->system), game->region);
+    uiCaption(true, notice && *notice ? notice : metadata, 100, 5, 108, 6);
+    readSdSpace(false);
+    if (game->size) formatStorageSize(game->size, gameSize, sizeof(gameSize)); else strcpy(gameSize, "Unknown size");
+    if (sdSpaceKnown) {
+        formatStorageSize(availableSdBytes, freeSpace, sizeof(freeSpace));
+        snprintf(metadata, sizeof(metadata), "Game %s / SD %s free", gameSize, freeSpace);
+    } else snprintf(metadata, sizeof(metadata), "Game %s / SD unavailable", gameSize);
+    uiPanel(true, 8, 172, 240, 20, 10);
+    uiCenteredCaption(true, metadata, 12, 176, 232, 7);
 }
 
 static void drawBrand(void) {
     clear(&top); uiBrand(true);
-    position(&top, 18, 4); iprintf("\x1b[37mYour library. On your DSi.");
-    position(&top, 22, 3); iprintf("\x1b[36mNDS / GBA / Others");
-    position(&top, 22, 25); iprintf("\x1b[37m" APP_VERSION);
+    uiCenteredText(true, "Your library. On your DSi.", 16, 138, 224, 1);
+    uiCenteredCaption(true, "NDS  /  GBA  /  Others", 16, 164, 224, 6);
+    uiCenteredCaption(true, APP_VERSION, 16, 180, 224, 14);
 }
 
 static bool __attribute__((unused)) playIntro(void) {
@@ -217,8 +263,8 @@ static bool __attribute__((unused)) playIntro(void) {
 
 static void drawStartup(void) {
     clear(&bottom);
-    uiText(false, "Getting ready", 16, 6, 224, 1);
-    position(&bottom, 4, 3); iprintf("\x1b[37mYour library is on its way.");
+    uiHeading(false, "Getting ready", 16, 0, 224);
+    uiCaption(false, "Connecting your library", 16, 28, 224, 6);
     static const char *labels[] = {"SD card", "Wi-Fi network", "PC library"};
     for (unsigned i = 0; i < 3; i++) {
         unsigned state = i < startupStage ? 2 : i == startupStage ? 1 : 0;
@@ -226,12 +272,10 @@ static void drawStartup(void) {
         uiPanel(false, 8, y, 240, 34, state == 1 ? 8 : 2);
         uiStageMark(16, y + 8, state);
         uiText(false, labels[i], 42, y, 196, 1);
-        position(&bottom, (y + 20) / 8 + 1, 6);
-        iprintf("\x1b[37m%.24s", state == 2 ? "Ready" : state == 1 ? startupDetail : "Waiting");
+        uiCaption(false, state == 2 ? "Ready" : state == 1 ? startupDetail : "Waiting", 42, y + 18, 196, 6);
     }
     uiBusy(startupTick * 3);
-    uiButton(8, 168, 240, 24, 2);
-    position(&bottom, 23, 3); iprintf("\x1b[36m[B]\x1b[39m Cancel connection");
+    symbolButton(8, 168, 240, 24, 2, UI_CLOSE, "Cancel");
     startupVisible = true;
     uiPresent();
 }
@@ -242,24 +286,15 @@ static void startup(unsigned stage, const char *detail) {
     drawStartup();
 }
 
-static bool loadCoverPreview(const Game *game) {
-    char savedError[sizeof(lastError)]; memcpy(savedError, lastError, sizeof(lastError));
-    loadingCover = true; coverFrames = 0;
-    bool complete = coverLoad(game);
-    loadingCover = false;
-    memcpy(lastError, savedError, sizeof(lastError));
-    return complete;
-}
-
 static int waitKey(void) {
     uiPresent();
     while (pmMainLoop()) {
         if (startupVisible && ++startupTick % 10 == 0) drawStartup();
-        swiWaitForVBlank(); scanKeys();
+        swiWaitForVBlank(); scanKeys(); uiAnimate();
         unsigned revision = clientRevision();
         clientTick(false);
         if (settingsVisible && revision != clientRevision()) drawSettings();
-        int key = keysDown();
+        int key = catalogInput(0);
         if (key & KEY_TOUCH) {
             touchRead(&lastTouch);
             if (!uiTouchFeedback(lastTouch.px, lastTouch.py)) key &= ~KEY_TOUCH;
@@ -274,19 +309,12 @@ static bool pollApp(bool wait) {
     static uint64_t lastPoll;
     if (!wait && tickGetCount() - lastPoll < ticksFromUsec(16667)) return !quitting;
     if (!pmMainLoop()) { quitting = true; strcpy(lastError, "Exiting"); return false; }
-    if (startupVisible && !loadingCover && ++startupTick % 10 == 0) drawStartup();
+    if (startupVisible && ++startupTick % 10 == 0) drawStartup();
     uiPresent();
     if (wait) swiWaitForVBlank();
     scanKeys();
     lastPoll = tickGetCount();
     clientTick(false);
-    if (loadingCover) {
-        int key = catalogInput(0);
-        if (key & KEY_TOUCH) touchRead(&lastTouch);
-        deferredKeys |= key;
-
-        return !key && ++coverFrames < 60 * 5;
-    }
     bool cancel = (keysDown() & KEY_B) != 0;
     if (keysDown() & KEY_TOUCH) {
         touchPosition touch; touchRead(&touch);
@@ -302,34 +330,31 @@ bool appYield(void) { return pollApp(true); }
 void progress(const char *title, const char *message, uint32_t done, uint32_t size) {
     if (clientActive()) clientProgress(done, size, message);
     char heading[40];
-    if (queueRunning) snprintf(heading, sizeof(heading), "QUEUE %u/%u / %s", queueCompleted + 1, queueBatchSize,
-        systemLabel(transferSystem));
-    else snprintf(heading, sizeof(heading), "%s", clientActive() ? "FROM WEB / DOWNLOAD TO SD" : size ? "TRANSFER" : "CONNECTING / PREPARING");
+    if (queueRunning) snprintf(heading, sizeof(heading), "Downloads %u of %u", queueCompleted + 1, queueBatchSize);
+    else snprintf(heading, sizeof(heading), "%s", clientActive() ? "From your library" : size ? "Transfer" : "Connecting");
     frame(&bottom, heading);
-    position(&bottom, 5, 3);
-    wrapped(title, 3);
-    position(&bottom, 10, 3); iprintf("\x1b[37m"); wrapped(message, 3);
+    uiText(false, title, 16, 34, 224, 3);
+    uiText(false, message, 16, 84, 224, 1);
     if (size) {
         unsigned percent = (unsigned)((uint64_t)done * 100 / size);
         if (percent > 100) percent = 100;
         uiMeter(percent);
-        position(&bottom, 20, 3); iprintf("\x1b[39m%lu / %lu KiB", (unsigned long)(done / 1024), (unsigned long)(size / 1024));
+        char detail[64]; snprintf(detail, sizeof(detail), "%lu / %lu KiB", (unsigned long)(done / 1024), (unsigned long)(size / 1024));
+        uiCenteredCaption(false, detail, 16, 152, 224, 6);
     } else {
         static unsigned phase;
-        position(&bottom, 17, 3); iprintf("\x1b[36mWorking%.*s", (int)(++phase % 4), "...");
-        position(&bottom, 20, 3); iprintf("\x1b[37mKeep your DSi open.");
+        uiBusy(++phase * 3);
+        uiCenteredCaption(false, "Working", 16, 126, 224, 6);
     }
-    uiButton(8, 168, 240, 24, 2);
-    position(&bottom, 23, 3); iprintf("\x1b[36m[B]\x1b[39m Pause / go back");
+    symbolButton(8, 168, 240, 24, 2, UI_PAUSE, "Pause");
     uiPresent();
 }
 
 static void message(const char *title, const char *text) {
     frame(&bottom, APP_NAME);
-    position(&bottom, 5, 3); iprintf("\x1b[33m"); wrapped(title, 3);
-    position(&bottom, 9, 3); iprintf("\x1b[39m"); wrapped(text, 11);
-    uiButton(8, 168, 240, 24, 2);
-    position(&bottom, 23, 3); iprintf("\x1b[36m[A/B]\x1b[39m Back  \x1b[37mSTART Exit");
+    uiText(false, title, 16, 36, 224, 2);
+    uiText(false, text, 16, 72, 224, 6);
+    symbolButton(8, 168, 240, 24, 2, UI_BACK, "Back");
     while (!quitting) {
         int key = waitKey();
         if (key & KEY_TOUCH) {
@@ -346,9 +371,9 @@ static bool inputField(const char *title, char *value, size_t capacity, bool sec
     snprintf(edited, sizeof(edited), "%s", value);
     frame(&bottom, title);
     uiPanel(false, 8, 28, 240, 24, 3);
-    position(&bottom, 8, 3);
-    iprintf("\x1b[37m%s", secret ? "START Save  B Back  R Show" :
-        !strcmp(title, "SEARCH LIBRARY") ? "START Search B Back X Clear" : "START Save  B Back  X Clear");
+    uiCaption(false, secret ? "START Save / B Back / R Show" :
+        !strcmp(title, "SEARCH LIBRARY") ? "START Search / B Back / X Clear" : "START Save / B Back / X Clear",
+        16, 56, 224, 6);
     uiPresent();
     keyboardShow();
 #ifdef ROMSFINDER_DISPLAY_TEST
@@ -380,17 +405,18 @@ static bool inputField(const char *title, char *value, size_t capacity, bool sec
         }
         if (redraw) {
             uiPanel(false, 8, 28, 240, 24, 3);
-            position(&bottom, 5, 3); iprintf("\x1b[39m                            ");
-            position(&bottom, 5, 3);
-            size_t visibleLength = strlen(edited);
-            const char *visible = edited;
-            if (visibleLength > 27) { visible += visibleLength - 27; visibleLength = 27; }
-            if (secret && !showing) {
-                for (unsigned i = 0; i < visibleLength; i++) iprintf("*");
-            } else iprintf("%s", visible);
-            uiPanel(false, 16 + visibleLength * 8, 32, 3, 12, 4);
+            char display[sizeof(edited)];
+            snprintf(display, sizeof(display), "%s", edited);
+            if (secret && !showing) memset(display, '*', strlen(display));
+            const char *visible = display;
+            // Scroll by actual glyph advances, leaving room for the caret.
+            while (*visible && uiTextWidth(visible) > 216) visible++;
+            unsigned visibleWidth = uiTextWidth(visible);
+            uiText(false, visible, 16, 32, 220, 1);
+            uiPanel(false, 16 + visibleWidth, 32, 2, 14, 4);
             redraw = false;
             uiPresent();
+            memset(display, 0, sizeof(display));
         }
     }
     keyboardHide();
@@ -509,33 +535,28 @@ static bool configureWifi(void) {
 typedef enum { CONFIG_NONE, CONFIG_SERVER, CONFIG_WIFI, CONFIG_FILTER, CONFIG_UPDATE } ConfigChange;
 
 static void drawSettings(void) {
-    clear(&top);
-    uiIcon(true, 112, 8);
-    position(&top, 7, 3); iprintf("\x1b[36m" APP_NAME " / " APP_VERSION);
-    position(&top, 10, 3); iprintf("\x1b[39mWeb: \x1b[36m%.23s", clientConnectionStatus());
-    position(&top, 12, 3); iprintf("\x1b[37mMAC: %s", clientMac());
+    drawTopHeading("Settings");
+    uiSymbol(true, 16, 50, UI_WIFI, clientRegistered() ? 5 : 6);
+    uiHeading(true, clientRegistered() ? "Connected" : "Offline", 44, 44, 196);
+    uiText(true, *settings.ssid ? settings.ssid : "System Wi-Fi profiles", 16, 78, 224, 2);
+    char address[96];
+    snprintf(address, sizeof(address), "%s:%u", settings.host, settings.port);
+    uiCaption(true, address, 16, 118, 224, 6);
+    uiCaption(true, clientConnectionDetail(), 16, 136, 224, 6);
     struct in_addr ip = { .s_addr = wifiInitialized ? Wifi_GetIP() : 0 };
-    position(&top, 14, 3); iprintf("\x1b[37mDSi: %s", inet_ntoa(ip));
-    uiPanel(true, 8, 120, 240, 56, 2);
-    position(&top, 16, 3); iprintf("\x1b[39m");
-    wrapped(clientConnectionDetail(), 3);
-    position(&top, 23, 3); iprintf("\x1b[37m%s: %.20s", activeSystem == SYSTEM_OTHERS ? "Category" : "Region", filterLabel(regionIndex));
-    frame(&bottom, "SETTINGS");
-    uiButton(168, 0, 80, 24, 2);
-    position(&bottom, 2, 23); iprintf("\x1b[36m[B]\x1b[39m Back");
-    position(&bottom, 5, 3); iprintf("\x1b[37mNETWORK\x1b[39m  %s", settings.wifiMode == WIFI_WPA2 ? "WPA2 / AES" : "System");
-    position(&bottom, 7, 3); iprintf("%.28s", *settings.ssid ? settings.ssid : "No custom network saved");
-    position(&bottom, 9, 3); iprintf("\x1b[37mPC\x1b[39m %s:%u", settings.host, settings.port);
-    uiButton(8, 88, 240, 24, 8);
-    position(&bottom, 13, 3); iprintf("\x1b[36m[A]\x1b[39m Set up WPA2 Wi-Fi");
-    uiButton(8, 116, 240, 24, 2);
-    position(&bottom, 16, 3); iprintf("\x1b[36m[X]\x1b[39m Change PC address");
-    uiButton(8, 144, 136, 24, 2); uiButton(152, 144, 96, 24, 8);
-    position(&bottom, 20, 3); iprintf("\x1b[36m[Y]\x1b[39m System WiFi");
-    position(&bottom, 20, 21); iprintf("\x1b[36m[L]\x1b[39m Update");
-    uiButton(4, 176, 122, 16, 2); uiButton(130, 176, 122, 16, 2);
-    position(&bottom, 23, 2); iprintf("\x1b[36m[R]\x1b[39m %s", activeSystem == SYSTEM_OTHERS ? "Category" : "Region");
-    position(&bottom, 23, 18); iprintf("\x1b[36m[START]\x1b[39m WiFi");
+    snprintf(address, sizeof(address), "IP %s", inet_ntoa(ip));
+    uiCaption(true, address, 16, 156, 224, 6);
+    snprintf(address, sizeof(address), "MAC %s  /  " APP_VERSION, clientMac());
+    uiCaption(true, address, 16, 176, 224, 14);
+    frame(&bottom, "Settings");
+    uiButton(216, 0, 32, 26, 2); uiSymbol(false, 224, 6, UI_BACK, 6);
+    symbolButton(8, 32, 240, 28, settingsFocus == 0 ? 8 : 2, UI_WIFI, "Wi-Fi network");
+    symbolButton(8, 66, 240, 28, settingsFocus == 1 ? 8 : 2, UI_SERVER, "Server address");
+    symbolButton(8, 100, 116, 28, settingsFocus == 2 ? 8 : 2, UI_SETTINGS, "System Wi-Fi");
+    symbolButton(132, 100, 116, 28, settingsFocus == 3 ? 8 : 2, UI_UPDATE, "App update");
+    symbolButton(8, 134, 116, 26, settingsFocus == 4 ? 8 : 2, UI_REFRESH, "Reconnect");
+    symbolButton(132, 134, 116, 26, settingsFocus == 5 ? 8 : 2, UI_FILTER, "Filter");
+    drawNavigation(3);
     settingsVisible = true;
     uiPresent();
 }
@@ -544,16 +565,32 @@ static ConfigChange configure(void) {
     while (!quitting) {
         drawSettings();
         int key = waitKey();
+        if (key & KEY_UP) { settingsFocus = (settingsFocus + 5) % 6; continue; }
+        if (key & KEY_DOWN) { settingsFocus = (settingsFocus + 1) % 6; continue; }
+        if (key & (KEY_LEFT | KEY_RIGHT) && settingsFocus >= 2) { settingsFocus ^= 1; continue; }
+        if (key & KEY_SELECT) {
+            navigationRequest = selectNavigation(3);
+            if (navigationRequest) return CONFIG_NONE;
+            continue;
+        }
+        if (key & KEY_A && !(key & KEY_TOUCH)) {
+            static const int actions[] = {KEY_A, KEY_X, KEY_Y, KEY_L, KEY_START, KEY_R};
+            key = (key & ~KEY_A) | actions[settingsFocus];
+        }
         if (key & KEY_TOUCH) {
             touchPosition touch = lastTouch;
-            if (touch.py < 24) key |= KEY_B;
-            else if (touch.py >= 88 && touch.py < 112) key |= KEY_A;
-            else if (touch.py >= 116 && touch.py < 140) key |= KEY_X;
-            else if (touch.py >= 144 && touch.py < 168) key |= touch.px < 148 ? KEY_Y : KEY_L;
-            else if (touch.py >= 176) key |= touch.px < 128 ? KEY_R : KEY_START;
+            if (touch.py >= 164) {
+                if (touch.px < 192) { navigationRequest = navigationAt(touch.px); return CONFIG_NONE; }
+                continue;
+            }
+            if (touch.py < 28) key |= KEY_B;
+            else if (touch.py >= 32 && touch.py < 60) key |= KEY_A;
+            else if (touch.py >= 66 && touch.py < 94) key |= KEY_X;
+            else if (touch.py >= 100 && touch.py < 128) key |= touch.px < 128 ? KEY_Y : KEY_L;
+            else if (touch.py >= 134 && touch.py < 160) key |= touch.px < 128 ? KEY_START : KEY_R;
         }
         if ((key & KEY_START) && (keysHeld() & KEY_L)) { quitting = true; return CONFIG_NONE; }
-        if (key & (KEY_B | KEY_SELECT)) return CONFIG_NONE;
+        if (key & KEY_B) return CONFIG_NONE;
         if (key & KEY_L) return CONFIG_UPDATE;
         if (key & KEY_START) return CONFIG_WIFI;
         if (key & KEY_R) {
@@ -619,7 +656,8 @@ static bool fetchPage(int requestedPage) {
     char encoded[244], path[512];
     lastError[0] = 0;
     if (browserVisible) {
-        position(&bottom, 17, 3); iprintf("\x1b[37mLoading page...             ");
+        uiPanel(true, 16, 172, 224, 20, 10);
+        uiCenteredCaption(true, "Loading library...", 16, 176, 224, 6);
         uiPresent();
     } else if (startupVisible) startup(2, "Loading your catalog...");
     else progress("Loading library", "Fetching search results from your PC...", 0, 0);
@@ -652,7 +690,9 @@ static bool fetchRandomGame(void) {
     char path[96];
     lastError[0] = 0;
     if (browserVisible) {
-        position(&bottom, 17, 3); iprintf("\x1b[37mPicking a random game...     ");
+        uiPanel(false, 8, 124, 240, 36, 2);
+        uiSymbol(false, 16, 134, UI_RANDOM, 5);
+        uiText(false, "Picking a random game...", 40, 134, 200, 1);
         uiPresent();
     } else progress("Loading library", "Picking a random game from your PC...", 0, 0);
     snprintf(path, sizeof(path), "/api/dsi/catalog?system=nds&q=&page=0&region=");
@@ -676,75 +716,47 @@ static bool fetchRandomGame(void) {
     return true;
 }
 
-static void drawGameDetail(const Game *game, const char *notice) {
-    bool known;
-    const u16 *cover = coverFind(game, &known);
-    uiPanel(false, 4, 28, 96, 96, 3);
-    uiPanel(false, 6, 30, 92, 92, 2);
-    if (cover) uiCover(cover);
-    else {
-        uiIcon(false, 36, 52);
-        position(&bottom, 13, 3); iprintf("\x1b[37m%s", known ? "No cover" : "Preview");
-    }
-    uiTitle(game->title, 108, 32, 136, 5);
-    position(&bottom, 15, 15);
-    if (notice && *notice) iprintf("\x1b[36m%.17s", notice);
-    else iprintf("\x1b[37m%s / %lu MiB", systemLabel(game->system),
-        (unsigned long)(game->size / (1024 * 1024)));
-}
-
 static void drawBrowser(void) {
-    clear(&top);
-    uiIcon(true, 0, 0);
-    position(&top, 2, 6); iprintf("\x1b[36m" APP_NAME "\x1b[39m");
-    position(&top, 2, 17); iprintf("\x1b[37m%s", clientRegistered() ? "WEB OK" : "WEB...");
-    position(&top, 2, 26); iprintf("\x1b[37m%d/%d", count ? selected + 1 : 0, count);
-    static const char *libraryNames[] = { "NINTENDO DS", "GAME BOY ADVANCE", "APPS & UPLOADS" };
-    position(&top, 3, 6); iprintf("\x1b[37m%s / LIBRARY", libraryNames[activeSystem]);
-    int first = selected < 6 ? 0 : selected - 5;
-    if (!count) {
-        position(&top, 9, 3); iprintf("\x1b[39mNo games found.");
-        position(&top, 12, 3); iprintf("\x1b[37m%s", activeSystem == SYSTEM_OTHERS ? "Upload files on your PC." : "Try a different search.");
+    if (count) drawFocusedGame(&games[selected], browserNotice);
+    else {
+        drawTopHeading(APP_NAME);
+        uiSymbol(true, 120, 56, UI_CATALOG, 4);
+        uiText(true, "No entries found", 16, 88, 224, 1);
+        uiText(true, clientRegistered() ? "Try another search or category." : "Library server unavailable.", 16, 112, 224, 2);
     }
-    for (int i = first; i < count && i < first + 6; i++) {
-        int y = 32 + (i - first) * 24;
-        if (i == selected) {
-            uiPanel(true, 4, y, 248, 23, 8);
-            uiPanel(true, 4, y + 2, 3, 19, 4);
-        } else if ((i - first) % 2 == 0) uiPanel(true, 4, y, 248, 23, 2);
-        position(&top, y / 8 + 1, 3); iprintf("\x1b[39m%.28s", games[i].title);
-        position(&top, y / 8 + 2, 3);
-        iprintf("\x1b[37m%.15s  %lu MiB", games[i].region, (unsigned long)(games[i].size / (1024 * 1024)));
+    if (count) {
+        bool known;
+        const u16 *left = count > 2 ? coverFind(&games[(selected + count - 1) % count], &known) : NULL;
+        const u16 *right = count > 1 ? coverFind(&games[(selected + 1) % count], &known) : NULL;
+        uiTopNeighbours(left, right);
     }
-    position(&top, 23, 2); iprintf("\x1b[36m%d games\x1b[37m  Page %d/%d", total, page + 1, pages);
-    position(&top, 24, 2); iprintf("\x1b[37mL/R System  LEFT/RIGHT Page");
+    if (!*browserNotice && count) {
+        static const char *regionTags[] = {"All", "EU", "DE", "US", "JP", "World"};
+        static const char *categoryTags[] = {"All", "Apps", "Uploads", "Themes", "Media"};
+        const char *tag = (activeSystem == SYSTEM_OTHERS ? categoryTags : regionTags)[regionIndex];
+        char detail[32]; snprintf(detail, sizeof(detail), "%s %d/%d", tag, page + 1, pages);
+        uiPanel(true, 96, 0, 116, 24, 1);
+        uiCaption(true, detail, 100, 5, 108, 6);
+    }
     clear(&bottom);
     for (unsigned slot = 0; slot < 2; slot++) {
         RomSystem tab = visibleSystem(slot);
-        uiButton(slot ? 104 : 4, 0, 96, 24, activeSystem == tab ? 4 : 2);
-        position(&bottom, 2, slot ? 16 : 4);
-        iprintf("%s%s", activeSystem == tab ? "\x1b[35m" : "\x1b[39m", systemLabel(tab));
+        uiButton(slot ? 72 : 8, 2, 60, 24, activeSystem == tab ? 8 : 2);
+        uiText(false, systemLabel(tab), slot ? 80 : 16, 5, 44, 1);
+        if (activeSystem == tab) uiPanel(false, slot ? 80 : 16, 24, 44, 2, 4);
     }
-    uiButton(204, 0, 48, 24, 2);
-    // Single row matches the tabs' vertical centering; two stacked rows left no bottom margin.
-    position(&bottom, 2, 27); iprintf("\x1b[36mY \x1b[37mRND");
-    if (count) drawGameDetail(&games[selected], browserNotice);
-    else {
-        position(&bottom, 6, 3); iprintf("\x1b[39m");
-        wrapped(activeSystem == SYSTEM_OTHERS ? "Add your own files in the web app's Others library." : "Search for a game to see its details.", 3);
+    uiButton(136, 2, 32, 24, 2);
+    uiSymbol(false, 144, 6, UI_RANDOM, 6);
+    uiButton(172, 2, 32, 24, 2); uiSymbol(false, 180, 6, UI_SEARCH, 6);
+    uiButton(208, 2, 40, 24, 2);
+    uiSymbol(false, 220, 6, UI_FILTER, 6);
+    int first = selected < 6 ? 0 : selected - 5;
+    for (int i = first; i < count && i < first + 6; i++) {
+        int y = 30 + (i - first) * 22;
+        uiListRow(y, games[i].title, i + 1, i == selected);
     }
-    uiButton(4, 124, 248, 20, 3);
-    uiPanel(false, 6, 126, 244, 16, 2);
-    position(&bottom, 17, 3); iprintf("\x1b[37m%s\x1b[39m  %.17s", activeSystem == SYSTEM_OTHERS ? "Category" : "Region", filterLabel(regionIndex));
-    uiChevron(236, 132);
-    uiButton(4, 144, 122, 23, 2); uiButton(130, 144, 122, 23, 2);
-    position(&bottom, 20, 2); iprintf("\x1b[36m[X]\x1b[39m Search");
-    position(&bottom, 20, 18); iprintf("\x1b[36m[START]\x1b[39m Q %u", downloads.count);
-    uiButton(4, 168, 122, 24, count ? 4 : 3);
-    uiButton(130, 168, 122, 24, 8);
-    position(&bottom, 23, 2);
-    iprintf(count ? "\x1b[35m[A] Download\x1b[39m" : "\x1b[37mSelect game");
-    position(&bottom, 23, 18); iprintf("\x1b[36m[+]\x1b[39m Queue");
+    if (!count) uiText(false, "No results", 16, 72, 224, 1);
+    drawNavigation(0);
     browserVisible = true;
     uiPresent();
 }
@@ -752,16 +764,13 @@ static void drawBrowser(void) {
 static void chooseThemeStyle(void) {
     unsigned choice = themeStyle;
     while (!quitting) {
-        frame(&bottom, "THEME MENU STYLE");
+        frame(&bottom, "Menu style");
         for (unsigned index = 0; index < 5; index++) {
             int y = 28 + index * 22;
-            uiButton(8, y, 240, 21, index == choice ? 8 : 2);
-            position(&bottom, (y + 4) / 8 + 1, 4); iprintf("%s %s", index == choice ? ">" : " ", themeStyleLabels[index]);
+            uiListRow(y, themeStyleLabels[index], index + 1, index == choice);
         }
-        uiButton(8, 140, 240, 24, 2);
-        position(&bottom, 19, 3); iprintf("[X] Favorites only: %s", themeFavoritesOnly ? "ON" : "OFF");
-        uiButton(8, 168, 240, 24, 2);
-        position(&bottom, 23, 3); iprintf("[A] Select  [B] Back");
+        symbolButton(8, 140, 240, 24, 2, UI_FAVORITE, themeFavoritesOnly ? "Favorites only: On" : "Favorites only: Off");
+        symbolButton(8, 168, 240, 24, 2, UI_BACK, "Back");
         int key = waitKey();
         if (key & KEY_TOUCH) {
             if (lastTouch.py >= 168) key |= KEY_B;
@@ -779,16 +788,12 @@ static bool chooseRegion(void) {
     unsigned choice = regionIndex;
     unsigned options = filterCount();
     while (!quitting) {
-        frame(&bottom, activeSystem == SYSTEM_OTHERS ? "SELECT CATEGORY" : "SELECT REGION");
+        frame(&bottom, activeSystem == SYSTEM_OTHERS ? "Category" : "Region");
         for (unsigned i = 0; i < options; i++) {
             int y = 28 + i * 22;
-            uiButton(8, y, 240, 21, i == choice ? 8 : 2);
-            if (i == choice) uiPanel(false, 8, y + 2, 3, 17, 4);
-            position(&bottom, (y + 4) / 8 + 1, 4);
-            iprintf(i == choice ? "\x1b[36m>\x1b[39m %s" : "\x1b[37m  %s", filterLabel(i));
+            uiListRow(y, filterLabel(i), i + 1, i == choice);
         }
-        uiButton(8, 168, 240, 24, 2);
-        position(&bottom, 23, 3); iprintf("\x1b[36m[B]\x1b[39m Cancel   \x1b[37m[A] Select");
+        symbolButton(8, 168, 240, 24, 2, UI_BACK, "Back");
         int key = waitKey();
         if (key & KEY_TOUCH) {
             if (lastTouch.py >= 168) key |= KEY_B;
@@ -992,14 +997,15 @@ static void updateApp(void) {
     }
     if (*lastError || quitting) return;
     frame(&bottom, "UPDATE DSIDROP");
-    position(&bottom, 5, 3); iprintf("\x1b[37mRunning: " APP_VERSION);
-    position(&bottom, 7, 3); iprintf("PC build: %08lx", (unsigned long)job.crc);
-    position(&bottom, 10, 3); iprintf("\x1b[39mInstall to:");
-    position(&bottom, 12, 3); wrapped(appPath, 3);
-    position(&bottom, 16, 3); iprintf("\x1b[37m%s", appPathKnown ? "Old app saved as .nds.bak" : "No launch path: SD root copy");
-    uiButton(8, 144, 240, 24, 4); uiButton(8, 168, 240, 24, 2);
-    position(&bottom, 20, 3); iprintf("\x1b[35m[A] Install update\x1b[39m");
-    position(&bottom, 23, 3); iprintf("\x1b[37m[B] Cancel");
+    uiText(false, "Running: " APP_VERSION, 16, 32, 224, 1);
+    char buildLabel[32];
+    snprintf(buildLabel, sizeof(buildLabel), "PC build: %08lx", (unsigned long)job.crc);
+    uiCaption(false, buildLabel, 16, 50, 224, 6);
+    uiText(false, "Install to:", 16, 68, 224, 1);
+    uiText(false, appPath, 16, 84, 224, 2);
+    uiCaption(false, appPathKnown ? "Old app saved as .nds.bak" : "No launch path: SD root copy", 16, 124, 224, 6);
+    symbolButton(8, 144, 240, 24, 4, UI_UPDATE, "Install update");
+    symbolButton(8, 168, 240, 24, 2, UI_CLOSE, "Cancel");
     for (;;) {
         int key = waitKey();
         if (quitting) return;
@@ -1068,50 +1074,390 @@ static bool remoteSaves(void) {
     return true;
 }
 
-static void drawQueue(unsigned selectedItem) {
-    clear(&top);
-    uiIcon(true, 0, 0);
-    position(&top, 2, 6); iprintf("\x1b[36mDOWNLOAD QUEUE");
-    position(&top, 3, 6); iprintf("\x1b[37m%u remaining / saved on SD", downloads.count);
-    if (!downloads.count) {
-        position(&top, 9, 3); iprintf("\x1b[39mYour queue is empty.");
-        position(&top, 12, 3); iprintf("\x1b[37mAdd games from either tab.");
+static int navigationAt(int x) {
+    static const int actions[] = { ACTION_SELECT, ACTION_SD, KEY_START, ACTION_SETUP };
+    return actions[x / 64];
+}
+
+static int selectNavigation(unsigned active) {
+    static const char *labels[] = {"Catalog", "SD card", "Transfers", "Settings"};
+    unsigned focus = active;
+    while (!quitting) {
+        frame(&bottom, "Explore");
+        for (unsigned index = 0; index < 4; index++) {
+            int y = 32 + index * 32;
+            uiButton(8, y, 240, 28, index == focus ? 8 : 2);
+            uiSymbol(false, 20, y + 6, (UiSymbol)index, index == focus ? 5 : 6);
+            uiText(false, labels[index], 52, y + 5, 184, 1);
+        }
+        drawNavigation(active);
+        int key = waitKey();
+        if (key & (KEY_UP | KEY_LEFT)) focus = (focus + 3) % 4;
+        else if (key & (KEY_DOWN | KEY_RIGHT)) focus = (focus + 1) % 4;
+        if (key & KEY_TOUCH) {
+            if (lastTouch.py >= 164) return navigationAt(lastTouch.px);
+            if (lastTouch.py >= 32 && lastTouch.py < 160) {
+                focus = (lastTouch.py - 32) / 32;
+                key |= KEY_A;
+            }
+        }
+        if (key & (KEY_B | KEY_SELECT)) return 0;
+        if (key & KEY_A) return navigationAt(focus * 64);
     }
+    return 0;
+}
+
+static bool dashboardNavigation(unsigned active, int key) {
+    if (key & KEY_SELECT) {
+        navigationRequest = selectNavigation(active);
+        return navigationRequest != 0;
+    }
+    if (key & KEY_START) {
+        navigationRequest = KEY_START;
+        return true;
+    }
+    if (!(key & KEY_TOUCH) || lastTouch.py < 164 || lastTouch.px / 64 == (int)active) return false;
+    navigationRequest = navigationAt(lastTouch.px);
+    return true;
+}
+
+static int waitDashboardKey(void) {
+    uiPresent();
+    while (!quitting && pmMainLoop()) {
+        swiWaitForVBlank(); scanKeys();
+        int pending = deferredKeys; deferredKeys = 0;
+        int key = catalogInput(pending);
+        if (key & KEY_TOUCH) {
+            if (!(pending & KEY_TOUCH)) touchRead(&lastTouch);
+            if (!uiTouchFeedback(lastTouch.px, lastTouch.py)) key &= ~KEY_TOUCH;
+        }
+        clientTick(!key);
+        if (key) return key;
+        if (remoteTransfer() || remoteLibrary() || remoteSaves() || coverPrefetchTick(0)) return ACTION_SELECT;
+    }
+    quitting = true;
+    return KEY_B;
+}
+
+static bool confirmAction(const char *title, const char *detail) {
+    frame(&bottom, title);
+    uiSymbol(false, 16, 32, strstr(title, "Delete") ? UI_DELETE : strstr(title, "Transfer") ? UI_TRANSFER : UI_RESTORE, 5);
+    uiText(false, detail, 16, 56, 224, 5);
+    symbolButton(8, 132, 240, 28, 4, UI_CHECK, "Confirm");
+    symbolButton(8, 164, 240, 28, 2, UI_CLOSE, "Cancel");
+    while (!quitting) {
+        int key = waitKey();
+        if (key & KEY_TOUCH) {
+            if (lastTouch.py >= 164) key |= KEY_B;
+            else if (lastTouch.py >= 132) key |= KEY_A;
+        }
+        if (key & KEY_B) return false;
+        if (key & KEY_A) return true;
+    }
+    return false;
+}
+
+static bool saveServerReady(void) {
+    if (!clientRegistered()) {
+        if (!connectWifi(false)) { message("Server unavailable", lastError); return false; }
+        clientTick(false);
+    }
+    return true;
+}
+
+static bool runSaveRequest(const char *action, const char *path, const char *backup, const SaveTarget *target, bool automatic) {
+    if (!saveServerReady()) return false;
+    if (!savesRequest(action, path, backup, target, automatic)) { message("Save request failed", lastError); return false; }
+    if (!strcmp(action, "backup") || !strcmp(action, "restore")) {
+        SaveCommand command;
+        if (savesPoll(&command)) {
+            bool ok = savesExecute(&command);
+            savesFinish(&command, ok, lastError);
+            message(ok ? "Save operation complete" : "Save operation failed", ok ?
+                command.restore ? "Save restored. Previous save backed up." : "Save backup stored on your server." : lastError);
+            return ok;
+        }
+        message("Save request queued", "The operation will run while DSiDrop remains open.");
+    } else if (!strcmp(action, "transfer")) message("Transfer queued", "The destination DSi will back up its current save before restoring this version.");
+    return true;
+}
+
+static void transferSave(const SaveVersion *version) {
+    static SaveTarget targets[PAGE_SIZE];
+    unsigned page = 0, selectedTarget = 0, amount = 0, totalTargets = 0;
+    bool reload = true;
+    while (!quitting && !navigationRequest) {
+        if (reload) {
+            if (!savesTargets(version, page, targets, &amount, &totalTargets)) { message("Save transfer", lastError); return; }
+            selectedTarget = 0; reload = false;
+        }
+        drawTopHeading("Destination DSi");
+        uiSymbol(true, 120, 48, UI_TRANSFER, 4);
+        if (amount) {
+            uiText(true, targets[selectedTarget].name, 16, 76, 224, 2);
+            uiText(true, targets[selectedTarget].path, 16, 112, 224, 4);
+        } else uiText(true, "No online DSi with a matching installed game.", 16, 88, 224, 3);
+        frame(&bottom, "Transfer save");
+        for (unsigned index = 0; index < amount; index++) {
+            int y = 30 + index * 22;
+            uiListRow(y, targets[index].name, index + 1, index == selectedTarget);
+        }
+        if (!amount) uiText(false, "No destinations available", 16, 64, 224, 2);
+        drawNavigation(1);
+        int key = waitDashboardKey();
+        if (dashboardNavigation(1, key) || (key & KEY_B)) return;
+        if (key & KEY_TOUCH && lastTouch.py >= 30 && lastTouch.py < 162) {
+            unsigned index = (lastTouch.py - 30) / 22;
+            if (index < amount) { if (index == selectedTarget) key |= KEY_A; selectedTarget = index; }
+        }
+        if (amount && key & KEY_UP) selectedTarget = (selectedTarget + amount - 1) % amount;
+        else if (amount && key & KEY_DOWN) selectedTarget = (selectedTarget + 1) % amount;
+        else if (key & KEY_LEFT && page) { page--; reload = true; }
+        else if (key & KEY_RIGHT && (page + 1) * 6 < totalTargets) { page++; reload = true; }
+        else if (amount && key & KEY_A) {
+            char detail[384];
+            snprintf(detail, sizeof(detail), "Send this backup to %s?\n%s\nThe destination save is backed up first.", targets[selectedTarget].name, targets[selectedTarget].path);
+            if (confirmAction("Transfer save", detail)) {
+                runSaveRequest("transfer", version->path, version->id, &targets[selectedTarget], false);
+                return;
+            }
+        }
+    }
+}
+
+static void versionActions(const SaveVersion *version) {
+    unsigned focus = 0;
+    while (!quitting && !navigationRequest) {
+        frame(&bottom, "Backup actions");
+        uiText(false, version->date, 16, 28, 224, 1);
+        symbolButton(8, 52, 240, 28, focus == 0 ? 8 : 2, UI_RESTORE, "Restore backup");
+        symbolButton(8, 88, 240, 28, focus == 1 ? 8 : 2, UI_TRANSFER, "Transfer to another DSi");
+        symbolButton(8, 124, 240, 28, focus == 2 ? 8 : 2, UI_DELETE, "Delete server backup");
+        drawNavigation(1);
+        int key = waitDashboardKey();
+        if (dashboardNavigation(1, key) || key & KEY_B) return;
+        if (key & KEY_UP) { focus = (focus + 2) % 3; continue; }
+        if (key & KEY_DOWN) { focus = (focus + 1) % 3; continue; }
+        if (key & KEY_A && !(key & KEY_TOUCH)) key = (key & ~KEY_A) | (focus == 0 ? KEY_A : focus == 1 ? KEY_Y : KEY_X);
+        if (key & KEY_TOUCH) {
+            if (lastTouch.py >= 52 && lastTouch.py < 80) key |= KEY_A;
+            else if (lastTouch.py >= 88 && lastTouch.py < 116) key |= KEY_Y;
+            else if (lastTouch.py >= 124 && lastTouch.py < 152) key |= KEY_X;
+        }
+        if (key & KEY_A) {
+            if (confirmAction("Restore backup", "Replace the current save with this version?\nThe current save is backed up before replacement.")) {
+                runSaveRequest("restore", version->path, version->id, NULL, false);
+                return;
+            }
+        } else if (key & KEY_Y) { transferSave(version); return; }
+        else if (key & KEY_X && confirmAction("Delete backup", "Delete this server backup permanently?\nThe current save on SD is not changed.")) {
+            runSaveRequest("delete", version->path, version->id, NULL, false);
+            return;
+        }
+    }
+}
+
+static void backupLocalSave(const SdGame *game) {
+    static char paths[4][224];
+    unsigned amount = librarySavePaths(game, paths), choice = 0;
+    if (!amount) { message("No local save", "No nonempty .sav file was found beside this game or in its saves folder."); return; }
+    while (amount > 1 && !quitting && !navigationRequest) {
+        frame(&bottom, "Choose save file");
+        for (unsigned index = 0; index < amount; index++) {
+            int y = 30 + index * 32;
+            uiButton(8, y, 240, 30, index == choice ? 8 : 1);
+            uiText(false, paths[index], 16, y, 224, 2);
+        }
+        drawNavigation(1);
+        int key = waitDashboardKey();
+        if (dashboardNavigation(1, key) || key & KEY_B) return;
+        if (key & KEY_UP) choice = (choice + amount - 1) % amount;
+        else if (key & KEY_DOWN) choice = (choice + 1) % amount;
+        if (key & KEY_TOUCH && lastTouch.py >= 30 && lastTouch.py < 158) {
+            unsigned index = (lastTouch.py - 30) / 32;
+            if (index < amount) { choice = index; key |= KEY_A; }
+        }
+        if (key & KEY_A) break;
+    }
+    if (!quitting && !navigationRequest) runSaveRequest("backup", paths[choice], NULL, NULL, false);
+}
+
+static void showNativeSaves(const SdGame *game) {
+    static SaveVersion versions[PAGE_SIZE];
+    unsigned page = 0, choice = 0, amount = 0, totalVersions = 0;
+    bool automatic = false, reload = true;
+    if (!saveServerReady()) return;
+    while (!quitting && !navigationRequest) {
+        if (reload) {
+            if (!savesVersions(game->path, page, versions, &amount, &totalVersions, &automatic)) { message("Save backups", lastError); return; }
+            if (!amount && page) { page--; continue; }
+            choice = 0; reload = false;
+        }
+        char status[96];
+        snprintf(status, sizeof(status), "%u backups / auto backup %s", totalVersions, automatic ? "on" : "off");
+        drawFocusedGame(&sdDetail, status);
+        frame(&bottom, "Backups");
+        uiButton(100, 0, 48, 26, automatic ? 8 : 2); uiText(false, "Auto", 108, 5, 32, 1);
+        uiButton(152, 0, 64, 26, 2); uiText(false, "Backup", 158, 5, 52, 1);
+        uiButton(220, 0, 28, 26, 2); uiSymbol(false, 226, 6, UI_BACK, 6);
+        for (unsigned index = 0; index < amount; index++) {
+            int y = 30 + index * 22;
+            uiButton(8, y, 240, 21, index == choice ? 8 : 1);
+            uiText(false, versions[index].date, 16, y + 2, 150, 1);
+            char size[20]; snprintf(size, sizeof(size), "%lu KiB", (unsigned long)((versions[index].size + 1023) / 1024));
+            uiText(false, size, 172, y + 2, 68, 1);
+        }
+        if (!amount) uiText(false, "No server backups yet", 16, 68, 224, 2);
+        drawNavigation(1);
+        int key = waitDashboardKey();
+        if (dashboardNavigation(1, key) || key & KEY_B) return;
+        if (key & KEY_TOUCH) {
+            if (lastTouch.py < 28) {
+                if (lastTouch.px >= 220) return;
+                if (lastTouch.px >= 152) key |= KEY_X;
+                else if (lastTouch.px >= 100) key |= KEY_Y;
+            } else if (lastTouch.py < 162) {
+                unsigned index = (lastTouch.py - 30) / 22;
+                if (index < amount) { if (index == choice) key |= KEY_A; choice = index; }
+            }
+        }
+        if (amount && key & KEY_UP) choice = (choice + amount - 1) % amount;
+        else if (amount && key & KEY_DOWN) choice = (choice + 1) % amount;
+        else if (key & KEY_LEFT && page) { page--; reload = true; }
+        else if (key & KEY_RIGHT && (page + 1) * 6 < totalVersions) { page++; reload = true; }
+        else if (key & KEY_X) { backupLocalSave(game); reload = true; }
+        else if (key & KEY_Y) {
+            if (runSaveRequest("automatic", NULL, NULL, NULL, !automatic)) reload = true;
+        } else if (amount && key & KEY_A) { versionActions(&versions[choice]); reload = true; }
+        else if (key & ACTION_SELECT) reload = true;
+    }
+}
+
+static void selectSdDetail(const SdGame *game) {
+    memset(&sdDetail, 0, sizeof(sdDetail));
+    strcpy(sdDetail.title, game->title); strcpy(sdDetail.region, "On SD");
+    sdDetail.size = game->size; sdDetail.system = game->system;
+    if (clientRegistered()) savesGame(game->path, &sdDetail);
+    coverPage(&sdDetail, *sdDetail.id ? 1 : 0, 0);
+}
+
+static void sdGameActions(unsigned index) {
+    const SdGame *game = libraryLocalGame(index);
+    if (!game) return;
+    unsigned focus = 0;
+    while (!quitting && !navigationRequest) {
+        frame(&bottom, "On SD");
+        symbolButton(8, 40, 240, 32, focus == 0 ? 8 : 2, UI_SAVE, "Save backups");
+        symbolButton(8, 84, 240, 32, focus == 1 ? 8 : 2, UI_DELETE, "Delete ROM");
+        symbolButton(8, 128, 240, 28, focus == 2 ? 8 : 2, UI_BACK, "Back");
+        drawNavigation(1);
+        int key = waitDashboardKey();
+        if (dashboardNavigation(1, key) || key & KEY_B) return;
+        if (key & KEY_UP) { focus = (focus + 2) % 3; continue; }
+        if (key & KEY_DOWN) { focus = (focus + 1) % 3; continue; }
+        if (key & KEY_A && !(key & KEY_TOUCH)) {
+            if (focus == 2) return;
+            key = (key & ~KEY_A) | (focus == 0 ? KEY_A : KEY_X);
+        }
+        if (key & KEY_TOUCH) {
+            if (lastTouch.py >= 128 && lastTouch.py < 156) return;
+            if (lastTouch.py >= 84 && lastTouch.py < 116) key |= KEY_X;
+            else if (lastTouch.py >= 40 && lastTouch.py < 72) key |= KEY_A;
+        }
+        if (key & KEY_A) showNativeSaves(game);
+        else if (key & KEY_X && confirmAction("Delete ROM", "Delete this installed game from SD?\nSave files and server backups are preserved.")) {
+            if (!libraryLocalDelete(index)) message("ROM deletion failed", lastError);
+            else if (clientRegistered()) libraryRefresh();
+            return;
+        }
+    }
+}
+
+static void showSdCard(void) {
+    static bool scanned;
+    unsigned choice = 0;
+    if (!scanned) {
+        if (!libraryLocalScan(appPath)) { message("SD library", lastError); return; }
+        scanned = true;
+    }
+    bool resolve = true;
+    while (!quitting && !navigationRequest) {
+        unsigned amount = libraryLocalCount();
+        if (amount && choice >= amount) choice = amount - 1;
+        if (amount && resolve) { selectSdDetail(libraryLocalGame(choice)); resolve = false; }
+        if (amount) coverPage(&sdDetail, *sdDetail.id ? 1 : 0, 0);
+        char status[96];
+        struct statvfs space;
+        if (!statvfs("/", &space)) {
+            uint64_t block = space.f_frsize ? space.f_frsize : space.f_bsize;
+            snprintf(status, sizeof(status), "%u games / %llu MiB free", amount, (unsigned long long)((uint64_t)space.f_bavail * block / (1024 * 1024)));
+        } else snprintf(status, sizeof(status), "%u installed games", amount);
+        if (amount) drawFocusedGame(&sdDetail, status);
+        else {
+            drawTopHeading("SD card"); uiSymbol(true, 120, 64, UI_SD, 4);
+            uiText(true, "No installed games found", 16, 100, 224, 2);
+            uiText(true, status, 16, 156, 224, 2);
+        }
+        frame(&bottom, "SD card");
+        uiButton(176, 0, 32, 26, 2); uiSymbol(false, 184, 5, UI_SAVE, 6);
+        uiButton(216, 0, 32, 26, 2); uiSymbol(false, 224, 6, UI_TRANSFER, 6);
+        unsigned first = choice / 6 * 6;
+        for (unsigned index = first; index < amount && index < first + 6; index++) {
+            int y = 30 + (index - first) * 22;
+            uiListRow(y, libraryLocalGame(index)->title, index + 1, index == choice);
+        }
+        if (!amount) uiText(false, "Your SD library is empty", 16, 68, 224, 2);
+        drawNavigation(1);
+        int key = waitDashboardKey();
+        if (dashboardNavigation(1, key) || key & KEY_B) return;
+        if (key & KEY_TOUCH) {
+            if (lastTouch.py < 28) key |= lastTouch.px >= 216 ? KEY_X : KEY_Y;
+            else if (lastTouch.py < 162) {
+                unsigned index = first + (lastTouch.py - 30) / 22;
+                if (index < amount) { if (index == choice) key |= KEY_A; choice = index; resolve = true; }
+            }
+        }
+        if (amount && key & KEY_UP) { choice = (choice + amount - 1) % amount; resolve = true; }
+        else if (amount && key & KEY_DOWN) { choice = (choice + 1) % amount; resolve = true; }
+        else if (key & KEY_LEFT && first) { choice = first - 6; resolve = true; }
+        else if (key & KEY_RIGHT && first + 6 < amount) { choice = first + 6; resolve = true; }
+        else if (amount && key & KEY_A) { sdGameActions(choice); resolve = true; }
+        else if (key & KEY_X) {
+            if (!libraryLocalScan(appPath)) message("SD refresh", lastError);
+            else if (clientRegistered()) { libraryRefresh(); remoteLibrary(); }
+            resolve = true;
+        } else if (key & KEY_Y && confirmAction("Back up all saves", "Back up all nonempty .sav files on this SD card to your server?"))
+            runSaveRequest("backup", NULL, NULL, NULL, false);
+    }
+}
+
+static void drawQueue(unsigned selectedItem) {
+        unsigned coverFirst = selectedItem / PAGE_SIZE * PAGE_SIZE;
+        coverPage(downloads.items + coverFirst, downloads.count - coverFirst, selectedItem - coverFirst);
+    if (downloads.count) {
+        char status[96];
+        snprintf(status, sizeof(status), "Queue %u / %s", downloads.count, systemLabel(downloads.items[selectedItem].system));
+        drawFocusedGame(&downloads.items[selectedItem], status);
+    } else {
+        drawTopHeading("Transfers"); uiSymbol(true, 120, 56, UI_TRANSFER, 4);
+        uiText(true, "Your queue is empty", 16, 88, 224, 1);
+    }
+    frame(&bottom, "Transfers");
+    uiButton(128, 0, 64, 26, downloads.count ? 8 : 2); uiText(false, "Start", 140, 5, 44, 1);
+    uiButton(192, 0, 56, 26, 2); uiText(false, "Remove", 194, 5, 54, 1);
     unsigned first = selectedItem < 6 ? 0 : selectedItem - 5;
     for (unsigned i = first; i < downloads.count && i < first + 6; i++) {
-        const Game *g = &downloads.items[i];
-        int y = 32 + (i - first) * 24;
-        if (i == selectedItem) uiPanel(true, 4, y, 248, 23, 8);
-        else if ((i - first) % 2 == 0) uiPanel(true, 4, y, 248, 23, 2);
-        position(&top, y / 8 + 1, 3); iprintf("\x1b[39m%.28s", g->title);
-        position(&top, y / 8 + 2, 3); iprintf("\x1b[36m%s\x1b[37m  %s", systemLabel(g->system),
-            queueRunning && i == 0 ? "Active" : "Waiting");
+        int y = 30 + (i - first) * 22;
+        uiListRow(y, downloads.items[i].title, i + 1, i == selectedItem);
     }
-    position(&top, 23, 2); iprintf("\x1b[37mUP/DOWN Select  %u/%u", downloads.count ? selectedItem + 1 : 0, downloads.count);
-    position(&top, 24, 2); iprintf("\x1b[37mAll systems / one at a time");
-    frame(&bottom, "DOWNLOAD QUEUE");
-    if (downloads.count) {
-        const Game *g = &downloads.items[selectedItem];
-        drawGameDetail(g, NULL);
-        uiPanel(false, 4, 124, 248, 16, 2);
-        position(&bottom, 17, 3); iprintf("\x1b[37mSave to %s/", downloadDirectory(g->system));
-    } else {
-        uiIcon(false, 112, 36);
-        uiTitle("Ready for your next game", 32, 76, 192, 2);
-        position(&bottom, 16, 3); iprintf("\x1b[37mAdd games from the catalog.");
-    }
-    uiButton(4, 144, 122, 23, 2); uiButton(130, 144, 122, 23, 2);
-    position(&bottom, 20, 2); iprintf("\x1b[36m[X]\x1b[39m Remove");
-    position(&bottom, 20, 18); iprintf("\x1b[36m[B]\x1b[39m Back");
-    uiButton(4, 168, 248, 24, downloads.count ? 4 : 3);
-    position(&bottom, 23, 6); iprintf(downloads.count ? "\x1b[35m[A] START QUEUE\x1b[39m" : "\x1b[37mQUEUE IS EMPTY");
+    if (!downloads.count) uiText(false, "No pending downloads", 16, 68, 224, 2);
+    drawNavigation(2);
     uiPresent();
 }
 
 static int waitQueueKey(unsigned selectedItem) {
-    unsigned idle = 0;
     while (pmMainLoop()) {
-        swiWaitForVBlank(); scanKeys();
+        swiWaitForVBlank(); scanKeys(); uiAnimate();
         clientTick(true);
         if (clientPending()) return KEY_B;
         int pending = deferredKeys; deferredKeys = 0;
@@ -1121,10 +1467,7 @@ static int waitQueueKey(unsigned selectedItem) {
             if (!uiTouchFeedback(lastTouch.px, lastTouch.py)) key &= ~KEY_TOUCH;
         }
         if (key) return key;
-        if (++idle == 18 && downloads.count) {
-            loadCoverPreview(&downloads.items[selectedItem]);
-            drawQueue(selectedItem);
-        }
+        if (coverPrefetchTick(selectedItem % PAGE_SIZE)) drawQueue(selectedItem);
     }
     quitting = true;
     return KEY_B;
@@ -1132,20 +1475,35 @@ static int waitQueueKey(unsigned selectedItem) {
 
 static bool queuedTransfer(const Game *game, void *context) {
     drawQueue(0);
-    return prepareAndTransfer(game, context);
+    bool ok = prepareAndTransfer(game, context);
+    sdSpaceDue = 0;
+    return ok;
 }
 
 static void showQueue(void) {
     unsigned selectedItem = 0;
     while (!quitting) {
         drawQueue(selectedItem);
+        unsigned previousSelected = selectedItem;
         int key = waitQueueKey(selectedItem);
         if (key & KEY_TOUCH) {
             touchPosition touch = lastTouch;
-            if (touch.py >= 144 && touch.py < 168) key |= touch.px < 128 ? KEY_X : KEY_B;
-            else if (touch.py >= 168) key |= KEY_A;
+            if (touch.py >= 164) {
+                if (touch.px < 128 || touch.px >= 192) { navigationRequest = navigationAt(touch.px); break; }
+                continue;
+            }
+            if (touch.py < 28) key |= touch.px >= 192 ? KEY_X : KEY_A;
+            else if (touch.py < 162) {
+                unsigned target = (selectedItem < 6 ? 0 : selectedItem - 5) + (touch.py - 30) / 22;
+                if (target < downloads.count) selectedItem = target;
+            }
         }
         if ((key & KEY_START) && (keysHeld() & KEY_L)) { quitting = true; break; }
+        if (key & KEY_SELECT) {
+            navigationRequest = selectNavigation(2);
+            if (navigationRequest) break;
+            continue;
+        }
         if (key & KEY_B) break;
         if ((key & KEY_UP) && downloads.count) selectedItem = (selectedItem + downloads.count - 1) % downloads.count;
         else if ((key & KEY_DOWN) && downloads.count) selectedItem = (selectedItem + 1) % downloads.count;
@@ -1168,6 +1526,8 @@ static void showQueue(void) {
             if (ok) message("Queue complete", "All games are on your SD card. Open /roms/nds/ or /roms/gba/ in TWiLight Menu++.");
             else message("Queue paused / stopped", lastError);
         }
+        if (selectedItem != previousSelected && (key & (KEY_UP | KEY_DOWN | KEY_TOUCH)))
+            uiCoverTransition(key & KEY_UP ? -1 : key & KEY_DOWN ? 1 : selectedItem > previousSelected ? 1 : -1);
     }
 }
 
@@ -1207,20 +1567,22 @@ static void previewTheme(const Game *game) {
 
 static void themeSelected(Game *game) {
     bool favorite = strchr(game->languages, '*') != NULL;
+    unsigned focus = 2;
     while (!quitting) {
-        frame(&bottom, "TWILIGHT MENU++ THEME");
-        position(&bottom, 5, 3); wrapped(game->title, 3);
-        position(&bottom, 9, 3); iprintf("%.25s", game->region);
-        position(&bottom, 11, 3); iprintf("Installs to theme folder");
-        uiButton(8, 96, 240, 24, 2);
-        position(&bottom, 14, 3); iprintf("[Y] Dual-screen preview");
-        uiButton(8, 120, 240, 24, 2);
-        position(&bottom, 17, 3); iprintf("[X] Favorite: %s", favorite ? "YES" : "NO");
-        uiButton(8, 144, 240, 24, 4);
-        position(&bottom, 20, 3); iprintf("[A] Install theme");
-        uiButton(8, 168, 240, 24, 2);
-        position(&bottom, 23, 3); iprintf("[B] Back");
+        frame(&bottom, "Theme");
+        uiText(false, game->title, 16, 32, 224, 3);
+        uiCaption(false, game->region, 16, 80, 224, 6);
+        symbolButton(8, 96, 240, 24, focus == 0 ? 8 : 2, UI_PREVIEW, "Dual-screen preview");
+        symbolButton(8, 120, 240, 24, focus == 1 ? 8 : 2, UI_FAVORITE, favorite ? "Remove favorite" : "Add favorite");
+        symbolButton(8, 144, 240, 24, focus == 2 ? 4 : 2, UI_DOWNLOAD, "Install theme");
+        symbolButton(8, 168, 240, 24, focus == 3 ? 8 : 2, UI_BACK, "Back");
         int key = waitKey();
+        if (key & KEY_UP) { focus = (focus + 3) % 4; continue; }
+        if (key & KEY_DOWN) { focus = (focus + 1) % 4; continue; }
+        if (key & KEY_A && !(key & KEY_TOUCH)) {
+            static const int actions[] = {KEY_Y, KEY_X, KEY_A, KEY_B};
+            key = (key & ~KEY_A) | actions[focus];
+        }
         if (key & KEY_TOUCH) {
             if (lastTouch.py >= 168) key |= KEY_B;
             else if (lastTouch.py >= 144) key |= KEY_A;
@@ -1245,21 +1607,27 @@ static void themeSelected(Game *game) {
 
 static void downloadSelected(void) {
     if (!count) return;
+    readSdSpace(true);
+    drawFocusedGame(&games[selected], NULL);
     if (games[selected].system == SYSTEM_OTHERS && !strncmp(games[selected].languages, "Themes", 6)) {
         themeSelected(&games[selected]); return;
     }
     const Game game = games[selected];
-    frame(&bottom, "DOWNLOAD TO SD");
-    position(&bottom, 5, 3);
-    wrapped(game.title, 3);
-    position(&bottom, 10, 3); iprintf("\x1b[36m%s", game.region);
-    position(&bottom, 13, 3); iprintf("\x1b[37mSave to %s/", downloadDirectory(game.system));
-    position(&bottom, 16, 3); iprintf("Partial downloads resume.");
-    uiButton(8, 144, 240, 24, 4);
-    position(&bottom, 20, 3); iprintf("\x1b[35m[A] Download / resume\x1b[39m");
-    uiButton(8, 168, 156, 24, 2); uiButton(168, 168, 80, 24, 2);
-    position(&bottom, 23, 3); iprintf("\x1b[37m[X] Add to queue");
-    position(&bottom, 23, 23); iprintf("\x1b[37m[B] Back");
+    frame(&bottom, "Download");
+    uiText(false, game.title, 16, 34, 224, 3);
+    uiCaption(false, game.region, 16, 80, 224, 6);
+    char amount[24], storageLabel[64];
+    if (game.size) formatStorageSize(game.size, amount, sizeof(amount)); else strcpy(amount, "Unknown");
+    snprintf(storageLabel, sizeof(storageLabel), "Game size: %s", amount);
+    uiSymbol(false, 16, 98, UI_INFO, 6);
+    uiText(false, storageLabel, 40, 98, 200, 1);
+    if (sdSpaceKnown) formatStorageSize(availableSdBytes, amount, sizeof(amount)); else strcpy(amount, "Unavailable");
+    snprintf(storageLabel, sizeof(storageLabel), "SD free: %s", amount);
+    uiSymbol(false, 16, 118, UI_SD, 6);
+    uiText(false, storageLabel, 40, 118, 200, 1);
+    symbolButton(8, 144, 240, 24, 4, UI_DOWNLOAD, "Download / resume");
+    symbolButton(8, 168, 156, 24, 2, UI_ADD, "Add to queue");
+    symbolButton(168, 168, 80, 24, 2, UI_BACK, "Back");
     int key;
     do {
         key = waitKey();
@@ -1271,7 +1639,9 @@ static void downloadSelected(void) {
     } while (!(key & (KEY_A | KEY_B | KEY_X)));
     if (key & KEY_B) return;
     if (key & KEY_X) { enqueueGame(&game); return; }
-    if (!prepareAndTransfer(&game, NULL) && !quitting) message("Download", lastError);
+    bool ok = prepareAndTransfer(&game, NULL);
+    sdSpaceDue = 0;
+    if (!ok && !quitting) message("Download", lastError);
 }
 
 int main(int argc, char **argv) {
@@ -1373,6 +1743,25 @@ int main(int argc, char **argv) {
     strcpy(exampleOther.title, "My Uploaded Homebrew");
     queueAdd(&downloads, &exampleOther);
     coverTestMissingFixture(&exampleOther);
+#ifdef ROMSFINDER_MOTION_TEST
+    for (int i = 0; i < count; i++) coverTestFixture(&games[i]);
+    bool motionRedraw = true;
+    while (pmMainLoop()) {
+        if (motionRedraw) { drawBrowser(); motionRedraw = false; }
+        swiWaitForVBlank(); scanKeys(); uiAnimate();
+        int key = catalogInput(0);
+        if (key & KEY_START) break;
+        if (key & (KEY_UP | KEY_DOWN)) {
+            int direction = key & KEY_UP ? -1 : 1;
+            selected = (selected + count + direction) % count;
+            uiCoverTransition(direction); motionRedraw = true;
+        }
+        /* Exercise status redraws while sprites are still moving. */
+        if (key & KEY_X) motionRedraw = true;
+    }
+    message("Cover motion passed", "Cover carousel, rapid reversal and unchanged-cover redraws completed.");
+    return 0;
+#endif
 #ifdef ROMSFINDER_SYSTEM_TEST
     assert(activeSystem == SYSTEM_NDS);
     assert(visibleSystem(0) == SYSTEM_NDS && visibleSystem(1) == SYSTEM_GBA);
@@ -1474,17 +1863,24 @@ int main(int argc, char **argv) {
     bool redraw = true;
     while (!quitting && pmMainLoop()) {
         if (redraw) { drawBrowser(); redraw = false; }
-        swiWaitForVBlank(); scanKeys();
+        swiWaitForVBlank(); scanKeys(); uiAnimate();
+        int previousSelected = selected;
         int pending = deferredKeys; deferredKeys = 0;
         int key = catalogInput(pending);
         if (key & KEY_TOUCH) {
             touchPosition touch;
             if (pending & KEY_TOUCH) touch = lastTouch; else touchRead(&touch);
             if (!uiTouchFeedback(touch.px, touch.py)) continue;
-            if (touch.py < 24) key |= touch.px >= 204 ? ACTION_RANDOM : systemTouchAction(touch.px);
-            if (touch.py >= 124 && touch.py < 144) key |= ACTION_REGION;
-            if (touch.py >= 144 && touch.py < 168) key |= touch.px < 128 ? KEY_X : KEY_START;
-            if (touch.py >= 168) key |= touch.px < 128 ? KEY_A : ACTION_ADD_QUEUE;
+            if (touch.py < 28) key |= touch.px < 136 ? (unsigned)systemTouchAction(touch.px) :
+                touch.px < 172 ? ACTION_RANDOM : touch.px < 208 ? KEY_X : ACTION_REGION;
+            else if (touch.py < 162) {
+                int target = (selected < 6 ? 0 : selected - 5) + (touch.py - 30) / 22;
+                if (target >= 0 && target < count) {
+                    key |= target == selected ? KEY_A : ACTION_SELECT;
+                    selected = target;
+                }
+            } else if (touch.py >= 164) key |= touch.px < 64 ? ACTION_SELECT :
+                touch.px < 128 ? ACTION_SD : touch.px < 192 ? KEY_START : ACTION_SETUP;
         }
         unsigned revision = clientRevision();
         clientTick(!key);
@@ -1506,7 +1902,11 @@ int main(int argc, char **argv) {
             if (!fetchPage(page - 1)) message("Library", lastError);
         } else if ((key & KEY_RIGHT) && page + 1 < pages) {
             if (!fetchPage(page + 1)) message("Library", lastError);
+        } else if (key & ACTION_SD) {
+            showSdCard();
         } else if (key & KEY_SELECT) {
+            navigationRequest = selectNavigation(0);
+        } else if (key & ACTION_SETUP) {
             ConfigChange change = configure();
             if (change == CONFIG_UPDATE && !quitting) {
                 if (connectWifi(false)) updateApp();
@@ -1515,7 +1915,7 @@ int main(int argc, char **argv) {
                 message("Connection", lastError);
         } else if (key & KEY_X) {
             if (inputText("SEARCH LIBRARY", query, sizeof(query)) && !fetchPage(0)) message("Search", lastError);
-        } else if (key & ACTION_REGION) {
+        } else if (key & (ACTION_REGION | KEY_B)) {
             if (chooseRegion()) {
                 drawBrowser();
                 if (!fetchPage(0)) message(activeSystem == SYSTEM_OTHERS ? "Category" : "Region", lastError);
@@ -1535,17 +1935,17 @@ int main(int argc, char **argv) {
                     message("Switch system", lastError);
                 }
             }
-        } else if (key & KEY_B) {
-            query[0] = 0; regionIndex = 0;
-            if (!fetchPage(0)) message("Library", lastError);
         } else if ((key & ACTION_ADD_QUEUE) && count) enqueueGame(&games[selected]);
         else if (key & KEY_A) downloadSelected();
         else if (key & KEY_START) {
             showQueue();
         }
+        if (selected != previousSelected && (key & (KEY_UP | KEY_DOWN | KEY_TOUCH)))
+            uiCoverTransition(key & KEY_UP ? -1 : key & KEY_DOWN ? 1 : selected > previousSelected ? 1 : -1);
+        if (navigationRequest) { deferredKeys |= navigationRequest; navigationRequest = 0; }
         if (!(key & (KEY_UP | KEY_DOWN))) coverPage(games, count, selected);
     }
-    clientClose(); coverPausePrefetch();
+    clientClose(); coverPausePrefetch(); libraryLocalFree();
     if (wifiInitialized) wlmgrStop();
     return 0;
 }

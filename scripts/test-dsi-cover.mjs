@@ -74,6 +74,17 @@ try {
   assert.equal(largeBody.readUInt16LE(12), 0);
   assert.equal(largeBody.readUInt16LE(12 + (44 * 88 + 44) * 2), 0x801f);
   assert.equal(calls, 4, "Higher resolution has its own cache entry");
+  const gallery = await dsiCover(new URLSearchParams({ system: "nds", id: nds, size: "112" }));
+  const galleryBody = Buffer.from(await gallery.arrayBuffer());
+  assert.equal(gallery.status, 200);
+  assert.equal(gallery.headers.get("Content-Length"), "25100");
+  assert.equal(galleryBody.length, 25100);
+  assert.equal(galleryBody.subarray(0, 8).toString(), "RFCOVER2");
+  assert.equal(galleryBody.readUInt16LE(8), 112);
+  assert.equal(galleryBody.readUInt16LE(10), 112);
+  assert.equal(galleryBody.readUInt16LE(12), 0);
+  assert.equal(galleryBody.readUInt16LE(12 + (56 * 112 + 56) * 2), 0x801f);
+  assert.equal(calls, 5, "Gallery covers retain their own resolution cache");
   assert.equal((await request("nds", nds)).status, 200, "Old clients still receive 64px covers");
   await assert.rejects(dsiCover(new URLSearchParams({ system: "nds", id: nds, size: "512" })), (error) => error.status === 400);
 
@@ -88,10 +99,10 @@ try {
   assert.equal(library.meta.withCover, 1);
   assert.equal(library.roms[0].c, "local-app");
   const previousCalls = calls;
-  for (const size of ["64", "88"]) {
+  for (const size of ["64", "88", "112"]) {
     const local = await dsiCover(new URLSearchParams({ system: "others", id: appId, size }));
     assert.equal(local.status, 200);
-    assert.equal((await local.arrayBuffer()).byteLength, size === "64" ? 8200 : 15500);
+    assert.equal((await local.arrayBuffer()).byteLength, (size === "64" ? 8 : 12) + Number(size) ** 2 * 2);
   }
   assert.equal(calls, previousCalls, "Local app covers never require an upstream fetch");
 

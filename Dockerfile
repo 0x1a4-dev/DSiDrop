@@ -22,7 +22,7 @@ ENV NODE_ENV=production \
     ROMS_DIR=/data/roms
 LABEL org.opencontainers.image.title="DSiDrop" \
       org.opencontainers.image.description="DSiDrop library and Nintendo DSi download server" \
-    org.opencontainers.image.version="1.19.0"
+    org.opencontainers.image.version="1.20.0"
 COPY --from=builder --chown=node:node /app/.next/standalone ./
 COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 COPY --from=builder --chown=node:node /app/public ./public

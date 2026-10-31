@@ -1,5 +1,4 @@
 #include "cover.h"
-#include <dswifi9.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -9,7 +8,7 @@
 
 static unsigned operations, requests, wireUsed, wireLength;
 static char requested[64][33];
-static unsigned char wire[16000];
+static unsigned char wire[12 + COVER_PIXELS * 2 + 256];
 static bool stalled;
 static int fakeSocket(int domain, int type, int protocol) { (void)domain; (void)type; (void)protocol; return 7; }
 static int fakeIoctl(int fd, int command, ...) { (void)fd; (void)command; return 0; }
@@ -56,6 +55,7 @@ static ssize_t fakeRecv(int fd, void *buffer, size_t length, int flags) {
 #define coverPage testedCoverPage
 #define coverPausePrefetch testedCoverPausePrefetch
 #define coverPrefetchTick testedCoverPrefetchTick
+#define coverRevision testedCoverRevision
 #include "../source/cover.c"
 
 static void ticks(unsigned count, unsigned selected) {
@@ -71,13 +71,25 @@ int runCoverTests(void) {
         memset(page[i].id, '0' + i, 32); page[i].id[32] = 0;
         page[i].system = SYSTEM_NDS;
     }
-    testedCoverPage(page, PAGE_SIZE, 7); ticks(1000, 7);
+    testedCoverPage(page, PAGE_SIZE, 7);
+    ticks(3, 7);
+    for (unsigned redraw = 0; redraw < 2000; redraw++) {
+        testedCoverPage(page, PAGE_SIZE, 7);
+        ticks(1, 7);
+    }
     assert(requests == PAGE_SIZE && !strcmp(requested[0], page[7].id));
     bool known;
     for (unsigned i = 0; i < PAGE_SIZE; i++) {
         const uint16_t *cover = testedCoverFind(&page[i], &known);
         assert(known && ((i == 4) == (cover == NULL)));
+        if (cover) {
+            uint32_t revision = testedCoverRevision(cover);
+            assert(revision);
+            assert(testedCoverFind(&page[i], &known) == cover);
+            assert(testedCoverRevision(cover) == revision);
+        }
     }
+    assert(testedCoverRevision(NULL) == 0);
     ticks(200, 3); assert(requests == PAGE_SIZE);
     static Game other = { .id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", .system = SYSTEM_OTHERS };
     testedCoverPage(&other, 1, 0); ticks(3, 0);
@@ -93,6 +105,20 @@ int runCoverTests(void) {
     testedCoverPage(&scoped, 1, 0); ticks(100, 0);
     assert(testedCoverFind(&scoped, &known) && known);
     testedCoverPausePrefetch();
+    const uint16_t *reused = cache[0].pixels;
+    uint32_t previousRevision = testedCoverRevision(reused);
+    cache[0].used = 0;
+    remember("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", SYSTEM_NDS, false);
+    assert(testedCoverRevision(reused) != previousRevision);
     puts("Cover prefetch: all ten, selected first, bounded fragmented I/O, full-page/negative cache, stale cancellation, pause/resume and system isolation passed");
     return 0;
 }
+
+#ifdef ROMSFINDER_HOST_TEST
+Settings settings = { .host = "127.0.0.1", .port = 3000 };
+const char *systemKey(RomSystem system) {
+    static const char *keys[] = {"nds", "gba", "others"};
+    return keys[system];
+}
+int main(void) { return runCoverTests(); }
+#endif

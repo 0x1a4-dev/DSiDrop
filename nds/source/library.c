@@ -15,6 +15,9 @@ static bool completed, startupPending;
 static uint64_t due, metadataFingerprint;
 static unsigned entries;
 static unsigned char inventoryBuffer[4096];
+static SdGame *localGames;
+static unsigned localCount, localCapacity;
+static bool collectingLocal, refreshPending;
 static bool scanDirectory(FILE *output, unsigned depth);
 
 static bool safePath(const char *path) {
@@ -77,8 +80,9 @@ bool libraryPoll(LibraryCommand *command) {
         if (total && available <= total) snprintf(storage, sizeof(storage), "&total=%llu&free=%llu", (unsigned long long)total, (unsigned long long)available);
     }
     urlEncode(completion, encoded, sizeof(encoded));
-    snprintf(path, sizeof(path), "/api/devices/library/sync?mac=%s&session=%s&cap=1&startup=%u&finished=%s&ok=%u&message=%s%s%s", clientMac(), session, startupPending ? 1 : 0, finished, completed ? 1 : 0, encoded, storage, metadata);
+    snprintf(path, sizeof(path), "/api/devices/library/sync?mac=%s&session=%s&cap=1&startup=%u&refresh=%u&finished=%s&ok=%u&message=%s%s%s", clientMac(), session, startupPending ? 1 : 0, refreshPending ? 1 : 0, finished, completed ? 1 : 0, encoded, storage, metadata);
     if (!httpText("POST", path, reply, sizeof(reply))) return false;
+    refreshPending = false;
     finished[0] = 0; completion[0] = 0;
     char *state, *magic = strtok_r(reply, "\t\r\n", &state), *action = strtok_r(NULL, "\t\r\n", &state);
     if (!magic || strcmp(magic, "RFLIBRARY1") || !action) return false;
@@ -111,6 +115,25 @@ bool libraryPoll(LibraryCommand *command) {
 static bool inventoryEntry(FILE *output, const struct stat *info) {
     if (++entries > 4096) { strcpy(lastError, "SD inventory exceeds 4096 files"); return false; }
     metadataFingerprint += fileFingerprint(scanPath, (uint32_t)info->st_size, (uint32_t)info->st_mtime);
+    if (collectingLocal && romPath(scanPath)) {
+        if (localCount == localCapacity) {
+            unsigned capacity = localCapacity ? localCapacity * 2 : 32;
+            SdGame *grown = realloc(localGames, capacity * sizeof(*localGames));
+            if (!grown) { strcpy(lastError, "Not enough memory for SD library"); return false; }
+            localGames = grown; localCapacity = capacity;
+        }
+        SdGame *game = &localGames[localCount++];
+        memset(game, 0, sizeof(*game));
+        strcpy(game->path, scanPath);
+        snprintf(game->title, sizeof(game->title), "%s", strrchr(scanPath, '/') + 1);
+        char *extension = strrchr(game->title, '.');
+        if (extension) *extension = 0;
+        for (char *letter = game->title; *letter; letter++) if (*letter == '_') *letter = ' ';
+        game->size = info->st_size; game->modified = info->st_mtime;
+        extension = strrchr(scanPath, '.');
+        game->system = !strcasecmp(extension, ".gba") ? SYSTEM_GBA :
+            !strncasecmp(scanPath, "/roms/others/", 13) ? SYSTEM_OTHERS : SYSTEM_NDS;
+    }
     if (!output) return true;
     char encoded[448];
     for (unsigned index = 0; index < strlen(scanPath); index++) snprintf(encoded + index * 2, 3, "%02x", (unsigned char)scanPath[index]);
@@ -196,3 +219,60 @@ void libraryFinish(const LibraryCommand *command, bool success) {
     snprintf(completion, sizeof(completion), "%.159s", success ? command->remove ? "ROM deleted; saves preserved" : "Games list updated" : lastError);
     due = 0;
 }
+
+static int compareLocalGames(const void *first, const void *second) {
+    return strcasecmp(((const SdGame *)first)->title, ((const SdGame *)second)->title);
+}
+
+void libraryLocalFree(void) {
+    free(localGames); localGames = NULL; localCount = localCapacity = 0;
+}
+
+bool libraryLocalScan(const char *executable) {
+    const char *colon = strchr(executable, ':');
+    snprintf(executablePath, sizeof(executablePath), "%s", colon ? colon + 1 : executable);
+    libraryLocalFree();
+    uint64_t previousFingerprint = metadataFingerprint;
+    entries = 0; metadataFingerprint = 0; strcpy(scanPath, "/"); collectingLocal = true;
+    progress("SD library", "Reading installed games", 0, 0);
+    bool ok = scanDirectory(NULL, 0);
+    collectingLocal = false; metadataFingerprint = previousFingerprint;
+    if (!ok) libraryLocalFree();
+    else if (localCount) qsort(localGames, localCount, sizeof(*localGames), compareLocalGames);
+    return ok;
+}
+
+unsigned libraryLocalCount(void) { return localCount; }
+
+const SdGame *libraryLocalGame(unsigned index) { return index < localCount ? &localGames[index] : NULL; }
+
+unsigned librarySavePaths(const SdGame *game, char paths[4][224]) {
+    char directory[224], filename[224], candidate[448];
+    strcpy(directory, game->path);
+    char *slash = strrchr(directory, '/');
+    strcpy(filename, slash + 1); *slash = 0;
+    char *extension = strrchr(filename, '.');
+    if (extension) *extension = 0;
+    unsigned count = 0;
+    for (unsigned style = 0; style < 4; style++) {
+        if (style < 2) snprintf(candidate, sizeof(candidate), "%s/%s%s.sav", directory, style ? "" : "saves/", filename);
+        else snprintf(candidate, sizeof(candidate), "%s/%s%s", directory, style == 3 ? "saves/" : "", strrchr(game->path, '/') + 1);
+        if (style >= 2) strncat(candidate, ".sav", sizeof(candidate) - strlen(candidate) - 1);
+        struct stat info;
+        if (strlen(candidate) <= 220 && !stat(candidate, &info) && S_ISREG(info.st_mode) && info.st_size > 0)
+            strcpy(paths[count++], candidate);
+    }
+    return count;
+}
+
+bool libraryLocalDelete(unsigned index) {
+    if (index >= localCount) return false;
+    const SdGame *game = &localGames[index];
+    LibraryCommand command = { .remove = true, .size = game->size, .modified = game->modified };
+    strcpy(command.path, game->path);
+    if (!headerCrc(command.path, &command.header) || !libraryExecute(&command)) return false;
+    memmove(localGames + index, localGames + index + 1, (--localCount - index) * sizeof(*localGames));
+    return true;
+}
+
+void libraryRefresh(void) { due = 0; refreshPending = true; }
