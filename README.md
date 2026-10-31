@@ -1,3 +1,4 @@
+
 # DSiDrop
 
 **Your library. On your DSi.**
@@ -7,7 +8,6 @@ A self-hosted game catalog and download manager with a companion app for Nintend
 ## Join our Discord
 
 [![Discord](https://img.shields.io/badge/Discord-Join%20our%20server-5865F2?logo=discord&logoColor=white)](https://discord.gg/AEZBum2yr)
-
 ## Features
 
 - Browse classic Nintendo games with cover art, search and filters.
@@ -19,7 +19,14 @@ A self-hosted game catalog and download manager with a companion app for Nintend
 - Back up, restore and transfer saves from your DSi or browser.
 - Update the DSi app from your own server.
 
-<img width="1154" height="839" alt="DSiDrop_Preview" src="https://github.com/user-attachments/assets/5c2e4431-1f5d-4dd7-8618-522b96ea5b19" />
+
+<kbd><img width="1154" height="839" alt="DSiDrop_Preview" src="https://github.com/user-attachments/assets/5c2e4431-1f5d-4dd7-8618-522b96ea5b19" /></kbd>
+
+
+<kbd><img width="256" height="384" alt="catalog" src="https://github.com/user-attachments/assets/253ba999-f41e-4634-a70c-f17b084fe24c" /></kbd>&emsp;&emsp;<kbd><img width="256" height="384" alt="settings" src="https://github.com/user-attachments/assets/9e31362f-2435-471c-ba65-e4a3ade23314" /></kbd>&emsp;&emsp;<kbd><img width="256" height="384" alt="backup1" src="https://github.com/user-attachments/assets/2fa56a5c-35ca-4a9d-abc6-1d78bfc71073" /></kbd>
+
+
+
 
 ## Quick start
 
